@@ -1,9 +1,9 @@
 ﻿using Allowed.Telegram.Bot.Handlers.MessageHandler;
+using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Telegram.Bot;
 
 namespace Allowed.Telegram.Bot.Services
 {
@@ -25,22 +25,18 @@ namespace Allowed.Telegram.Bot.Services
 
         private void DoWork(CancellationToken stoppingToken)
         {
-            ITelegramBotClient botClient =
-                (ITelegramBotClient)Services.GetService(typeof(ITelegramBotClient));
+            IControllersCollection controllersCollection = (IControllersCollection)Services.GetService(typeof(IControllersCollection));
+            IClientsCollection clientsCollection = (IClientsCollection)Services.GetService(typeof(IClientsCollection));
 
-            botClient.OnMessage += (a, b) =>
+            foreach (ClientItem client in clientsCollection.Clients)
             {
-                ((IMessageHandler)Services.GetService(typeof(IMessageHandler)))
-                    .OnMessage(a, b);
-            };
+                IMessageHandler messageHandler = new MessageHandler(controllersCollection, client.Client, client.Name);
 
-            botClient.OnCallbackQuery += (a, b) =>
-            {
-                ((IMessageHandler)Services.GetService(typeof(IMessageHandler)))
-                    .OnCallbackQuery(a, b);
-            };
+                client.Client.OnMessage += (a, b) => messageHandler.OnMessage(a, b);
+                client.Client.OnCallbackQuery += (a, b) => messageHandler.OnCallbackQuery(a, b);
 
-            botClient.StartReceiving();
+                client.Client.StartReceiving();
+            }
         }
 
         public override async Task StopAsync(CancellationToken stoppingToken)

@@ -1,7 +1,8 @@
 ﻿using Allowed.Telegram.Bot.Controllers;
-using Allowed.Telegram.Bot.Handlers.MessageHandler;
+using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,32 +12,36 @@ namespace Allowed.Telegram.Bot.Services.Extensions
 {
     public static class ControllersExtensions
     {
-        public static IServiceCollection AddTelegramControllers(this IServiceCollection services, string token)
+        public static IServiceCollection AddTelegramControllers(this IServiceCollection services, IEnumerable<BotData> data)
         {
-            ITelegramBotClient client = new TelegramBotClient(token);
-            services.AddSingleton(client);
+            services.AddCommandControllers();
+            services.AddTelegramClients(data);
 
-            Type type = typeof(CommandController);
-
-            List<Type> types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
-                .Where(p => p.IsSubclassOf(type)).ToList();
-
-            services.AddSingleton<IControllersCollection>(
-                new ControllersCollection
-                {
-                    Controllers = types.Select(t =>
-                    {
-                        CommandController controller = (CommandController)Activator.CreateInstance(t);
-                        controller.Client = client;
-                        return controller;
-
-                    }).ToList()
-                });
-
-            services.AddTransient<IMessageHandler, MessageHandler>();
+            services.AddHostedService<BotService>();
 
             return services;
+        }
+
+        private static void AddCommandControllers(this IServiceCollection services)
+        {
+            services.TryAddSingleton<IControllersCollection>(
+                new ControllersCollection
+                {
+                    Controllers = AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(s => s.GetTypes())
+                        .Where(p => p.IsSubclassOf(typeof(CommandController)))
+                        .Select(t => (CommandController)Activator.CreateInstance(t)).ToList()
+                });
+        }
+
+        private static void AddTelegramClients(this IServiceCollection services, IEnumerable<BotData> data)
+        {
+            services.TryAddSingleton<IClientsCollection>(
+                new ClientsCollection
+                {
+                    Clients = data
+                        .Select(d => new ClientItem { Client = new TelegramBotClient(d.Token), Name = d.Name }).ToList()
+                });
         }
     }
 }

@@ -5,8 +5,10 @@ using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 
@@ -14,21 +16,46 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 {
     public class MessageHandler : IMessageHandler
     {
-        private readonly IControllersCollection _collection;
+        private readonly ITelegramBotClient _client;
+        private readonly List<CommandController> _controllers;
 
-        public MessageHandler(IControllersCollection collection)
+        public MessageHandler(IControllersCollection collection, ITelegramBotClient client, string botName)
         {
-            _collection = collection;
+            _client = client;
+            _controllers = collection.Controllers
+                .Where(c =>
+                {
+                    BotNameAttribute[] attributes = GetBotNameAttributes(c);
+                    return attributes.Length == 0 || attributes.Any(a => a.GetName() == botName);
+                }).ToList();
+        }
+
+        private BotNameAttribute[] GetBotNameAttributes(CommandController controller)
+        {
+            return ((BotNameAttribute[])controller.GetType().GetCustomAttributes(typeof(BotNameAttribute), false));
         }
 
         private (CommandController, MethodInfo) GetMethodByPath(string path)
         {
-            foreach (CommandController controller in _collection.Controllers)
+            foreach (CommandController controller in _controllers)
             {
                 MethodInfo method = controller.GetType().GetMethods()
-                     .Where(m => ((CommandAttribute[])m.GetCustomAttributes(typeof(CommandAttribute), false))
-                       .Any(a => $"/{a.GetPath()}" == path))
-                     .FirstOrDefault();
+                     .FirstOrDefault(m => ((CommandAttribute[])m.GetCustomAttributes(typeof(CommandAttribute), false))
+                       .Any(a => $"/{a.GetPath()}" == path));
+
+                if (method != null)
+                    return (controller, method);
+            }
+
+            return (null, null);
+        }
+
+        private (CommandController, MethodInfo) GetDefaultMethod()
+        {
+            foreach (CommandController controller in _controllers)
+            {
+                MethodInfo method = controller.GetType().GetMethods()
+                     .FirstOrDefault(m => ((DefaultCommandAttribute[])m.GetCustomAttributes(typeof(DefaultCommandAttribute), false)).Any());
 
                 if (method != null)
                     return (controller, method);
@@ -39,12 +66,11 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
         private (CommandController, MethodInfo) GetMethodBySmile(string text)
         {
-            foreach (CommandController controller in _collection.Controllers)
+            foreach (CommandController controller in _controllers)
             {
                 MethodInfo method = controller.GetType().GetMethods()
-                     .Where(m => ((SmileCommandAttribute[])m.GetCustomAttributes(typeof(SmileCommandAttribute), false))
-                       .Any(a => text.StartsWith(a.GetSmile())))
-                     .FirstOrDefault();
+                     .FirstOrDefault(m => ((SmileCommandAttribute[])m.GetCustomAttributes(typeof(SmileCommandAttribute), false))
+                       .Any(a => text.StartsWith(a.GetSmile())));
 
                 if (method != null)
                     return (controller, method);
@@ -55,12 +81,11 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
         private (CommandController, MethodInfo) GetMethodByCallbackPath(string path)
         {
-            foreach (CommandController controller in _collection.Controllers)
+            foreach (CommandController controller in _controllers)
             {
                 MethodInfo method = controller.GetType().GetMethods()
-                     .Where(m => ((CallbackQueryAttribute[])m.GetCustomAttributes(typeof(CallbackQueryAttribute), false))
-                       .Any(a => a.GetPath() == path))
-                     .FirstOrDefault();
+                     .FirstOrDefault(m => ((CallbackQueryAttribute[])m.GetCustomAttributes(typeof(CallbackQueryAttribute), false))
+                       .Any(a => a.GetPath() == path));
 
                 if (method != null)
                     return (controller, method);
@@ -75,7 +100,17 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Item1 != null)
             {
-                method.Item2?.Invoke(method.Item1, new object[] { message });
+                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
+            }
+        }
+
+        private void FindDefaultCommand(Message message)
+        {
+            (CommandController, MethodInfo) method = GetDefaultMethod();
+
+            if (method.Item1 != null)
+            {
+                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
             }
         }
 
@@ -85,7 +120,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Item1 != null)
             {
-                method.Item2?.Invoke(method.Item1, new object[] { message });
+                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
             }
         }
 
@@ -99,12 +134,12 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                 ParameterInfo[] parameterInfos = method.Item2.GetParameters();
 
                 if (parameterInfos.Length == 1)
-                    method.Item2.Invoke(method.Item1, new object[] { callback });
+                    method.Item2.Invoke(method.Item1, new object[] { new CallbackQueryData { Client = _client, CallbackQuery = callback } });
                 else if (parameterInfos.Length == 2)
                 {
                     Type type = parameterInfos[1].ParameterType;
-                    var test = JsonConvert.DeserializeObject(callback.Data, type);
-                    method.Item2.Invoke(method.Item1, new object[] { callback, test });
+                    CallbackQueryModel model = (CallbackQueryModel)JsonConvert.DeserializeObject(callback.Data, type);
+                    method.Item2.Invoke(method.Item1, new object[] { new CallbackQueryData { Client = _client, CallbackQuery = callback, Model = model } });
                 }
             }
         }
@@ -121,41 +156,27 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
         public async void OnMessage(object sender, MessageEventArgs e)
         {
-            try
-            {
-                Message message = e.Message;
-                Console.WriteLine($"Received a text message in chat {message.Chat.Id}.");
+            Message message = e.Message;
 
-                if (!string.IsNullOrEmpty(message.Text))
-                {
-                    if (message.Text.StartsWith("/"))
-                        FindCommand(message);
-                    else if (IsFirstSmile(message.Text))
-                        FindSmileCommand(message);
-                }
-            }
-            catch (Exception ex)
+            if (!string.IsNullOrEmpty(message.Text))
             {
-
+                if (message.Text.StartsWith("/"))
+                    FindCommand(message);
+                else if (IsFirstSmile(message.Text))
+                    FindSmileCommand(message);
+                else
+                    FindDefaultCommand(message);
             }
         }
 
         public async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
-            try
-            {
-                CallbackQuery callback = e.CallbackQuery;
-                Message message = callback.Message;
-                Console.WriteLine($"Received a text message in chat {message.Chat.Id}.");
+            CallbackQuery callback = e.CallbackQuery;
+            Message message = callback.Message;
 
-                if (e.CallbackQuery.Data != null)
-                {
-                    FindCallback(callback);
-                }
-            }
-            catch (Exception ex)
+            if (e.CallbackQuery.Data != null)
             {
-
+                FindCallback(callback);
             }
         }
     }
