@@ -11,6 +11,7 @@ using System.Reflection;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 {
@@ -79,6 +80,21 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             return (null, null);
         }
 
+        private (CommandController, MethodInfo) GetMethodByType(MessageType type)
+        {
+            foreach (CommandController controller in _controllers)
+            {
+                MethodInfo method = controller.GetType().GetMethods()
+                     .FirstOrDefault(m => ((TypedCommandAttribute[])m.GetCustomAttributes(typeof(TypedCommandAttribute), false))
+                     .Any(a => a.GetMessageType() == type));
+
+                if (method != null)
+                    return (controller, method);
+            }
+
+            return (null, null);
+        }
+
         private (CommandController, MethodInfo) GetMethodByCallbackPath(string path)
         {
             foreach (CommandController controller in _controllers)
@@ -124,6 +140,16 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             }
         }
 
+        private void FindTypedCommand(Message message)
+        {
+            (CommandController, MethodInfo) method = GetMethodByType(message.Type);
+
+            if (method.Item1 != null)
+            {
+                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
+            }
+        }
+
         private void FindCallback(CallbackQuery callback)
         {
             (CommandController, MethodInfo) method
@@ -158,14 +184,19 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         {
             Message message = e.Message;
 
-            if (!string.IsNullOrEmpty(message.Text))
+            switch (message.Type)
             {
-                if (message.Text.StartsWith("/"))
-                    FindCommand(message);
-                else if (IsFirstSmile(message.Text))
-                    FindSmileCommand(message);
-                else
-                    FindDefaultCommand(message);
+                case MessageType.Text:
+                    if (message.Text.StartsWith("/"))
+                        FindCommand(message);
+                    else if (IsFirstSmile(message.Text))
+                        FindSmileCommand(message);
+                    else
+                        FindDefaultCommand(message);
+                    break;
+                default:
+                    FindTypedCommand(message);
+                    break;
             }
         }
 

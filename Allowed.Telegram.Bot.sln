@@ -5,11 +5,13 @@ VisualStudioVersion = 16.0.29926.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot", "Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj", "{930CEBDC-25BF-4227-97D8-E30A19D3E28D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.Telegram.Bot.Sample", "Allowed.Telegram.Bot.Sample\Allowed.Telegram.Bot.Sample.csproj", "{62E2B49F-A15D-483D-87DC-C209D3EDA82C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot.Sample", "Allowed.Telegram.Bot.Sample\Allowed.Telegram.Bot.Sample.csproj", "{62E2B49F-A15D-483D-87DC-C209D3EDA82C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{7FB87FF2-C37F-49D9-915B-A34540469640}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sources", "sources", "{88A2F7E8-8650-4E98-A361-833BEBB62D8F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.Telegram.Bot.Data", "Allowed.Telegram.Bot.Data\Allowed.Telegram.Bot.Data.csproj", "{DC79EA85-373A-4AB6-A208-2A224849789F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +27,10 @@ Global
 		{62E2B49F-A15D-483D-87DC-C209D3EDA82C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62E2B49F-A15D-483D-87DC-C209D3EDA82C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62E2B49F-A15D-483D-87DC-C209D3EDA82C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC79EA85-373A-4AB6-A208-2A224849789F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC79EA85-373A-4AB6-A208-2A224849789F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC79EA85-373A-4AB6-A208-2A224849789F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC79EA85-373A-4AB6-A208-2A224849789F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +38,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{930CEBDC-25BF-4227-97D8-E30A19D3E28D} = {88A2F7E8-8650-4E98-A361-833BEBB62D8F}
 		{62E2B49F-A15D-483D-87DC-C209D3EDA82C} = {7FB87FF2-C37F-49D9-915B-A34540469640}
+		{DC79EA85-373A-4AB6-A208-2A224849789F} = {7FB87FF2-C37F-49D9-915B-A34540469640}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9CD5FD8C-AA30-4BAE-B081-B9DBA7E0FCDA}

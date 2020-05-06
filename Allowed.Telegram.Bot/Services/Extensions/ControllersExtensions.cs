@@ -1,5 +1,4 @@
-﻿using Allowed.Telegram.Bot.Controllers;
-using Allowed.Telegram.Bot.Models;
+﻿using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,24 +13,15 @@ namespace Allowed.Telegram.Bot.Services.Extensions
     {
         public static IServiceCollection AddTelegramControllers(this IServiceCollection services, IEnumerable<BotData> data)
         {
-            services.AddCommandControllers();
-            services.AddTelegramClients(data);
+            if (data.Any(da => data.Count(d => d.Token == da.Token) > 1))
+                throw new Exception("Token duplicate");
+            else if (data.Any(da => data.Count(d => d.Name == da.Name) > 1))
+                throw new Exception("Name duplicate");
 
+            services.AddTelegramClients(data);
             services.AddHostedService<BotService>();
 
             return services;
-        }
-
-        private static void AddCommandControllers(this IServiceCollection services)
-        {
-            services.TryAddSingleton<IControllersCollection>(
-                new ControllersCollection
-                {
-                    Controllers = AppDomain.CurrentDomain.GetAssemblies()
-                        .SelectMany(s => s.GetTypes())
-                        .Where(p => p.IsSubclassOf(typeof(CommandController)))
-                        .Select(t => (CommandController)Activator.CreateInstance(t)).ToList()
-                });
         }
 
         private static void AddTelegramClients(this IServiceCollection services, IEnumerable<BotData> data)
