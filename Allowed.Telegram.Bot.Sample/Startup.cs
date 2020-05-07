@@ -19,11 +19,11 @@ namespace Allowed.Telegram.Bot.Sample
         {
             services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(AllowedConstants.DbConnection), ServiceLifetime.Singleton);
 
-            services.AddTelegramControllers(new BotData[] {
-                new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
-            });
-
-            services.AddTelegramStore<ApplicationDbContext>();
+            services
+                .AddTelegramControllers(new BotData[] {
+                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
+                })
+                .AddTelegramStore<ApplicationDbContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

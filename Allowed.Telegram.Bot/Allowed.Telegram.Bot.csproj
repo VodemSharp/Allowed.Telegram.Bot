@@ -6,7 +6,7 @@
     <Company>Allowed Inc.</Company>
     <Authors>VodemSharp</Authors>
     <Product>AllowedSharp</Product>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <PackageId>Allowed.Telegram.Bot</PackageId>
   </PropertyGroup>
 
