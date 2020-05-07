@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Allowed.Telegram.Bot.Sample.Data
 {
-
     public class DbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
     {
         public ApplicationDbContext CreateDbContext(string[] args)

@@ -8,5 +8,6 @@ namespace Allowed.Telegram.Bot.Models
         public ITelegramBotClient Client { get; set; }
         public CallbackQuery CallbackQuery { get; set; }
         public CallbackQueryModel Model { get; set; }
+        public BotData BotData { get; set; }
     }
 }

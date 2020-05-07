@@ -30,7 +30,7 @@ namespace Allowed.Telegram.Bot.Services.Extensions
                 new ClientsCollection
                 {
                     Clients = data
-                        .Select(d => new ClientItem { Client = new TelegramBotClient(d.Token), Name = d.Name }).ToList()
+                        .Select(d => new ClientItem { Client = new TelegramBotClient(d.Token), BotData = d }).ToList()
                 });
         }
     }

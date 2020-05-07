@@ -19,15 +19,17 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
     {
         private readonly ITelegramBotClient _client;
         private readonly List<CommandController> _controllers;
+        private readonly BotData _botData;
 
-        public MessageHandler(IControllersCollection collection, ITelegramBotClient client, string botName)
+        public MessageHandler(IControllersCollection collection, ITelegramBotClient client, BotData botData)
         {
             _client = client;
+            _botData = botData;
             _controllers = collection.Controllers
                 .Where(c =>
                 {
                     BotNameAttribute[] attributes = GetBotNameAttributes(c);
-                    return attributes.Length == 0 || attributes.Any(a => a.GetName() == botName);
+                    return attributes.Length == 0 || attributes.Any(a => a.GetName() == botData.Name);
                 }).ToList();
         }
 
@@ -116,7 +118,13 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Item1 != null)
             {
-                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
+                method.Item2?.Invoke(method.Item1, new object[] {
+                    new MessageData {
+                        Message = message,
+                        Client = _client,
+                        BotData = _botData
+                    }
+                });
             }
         }
 
@@ -126,7 +134,13 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Item1 != null)
             {
-                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
+                method.Item2?.Invoke(method.Item1, new object[] {
+                    new MessageData {
+                        Message = message,
+                        Client = _client,
+                        BotData = _botData
+                    }
+                });
             }
         }
 
@@ -136,7 +150,13 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Item1 != null)
             {
-                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
+                method.Item2?.Invoke(method.Item1, new object[] {
+                    new MessageData {
+                        Message = message,
+                        Client = _client,
+                        BotData = _botData
+                    }
+                });
             }
         }
 
@@ -146,7 +166,13 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Item1 != null)
             {
-                method.Item2?.Invoke(method.Item1, new object[] { new MessageData { Message = message, Client = _client } });
+                method.Item2?.Invoke(method.Item1, new object[] {
+                    new MessageData {
+                        Message = message,
+                        Client = _client,
+                        BotData = _botData
+                    }
+                });
             }
         }
 
@@ -160,12 +186,26 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                 ParameterInfo[] parameterInfos = method.Item2.GetParameters();
 
                 if (parameterInfos.Length == 1)
-                    method.Item2.Invoke(method.Item1, new object[] { new CallbackQueryData { Client = _client, CallbackQuery = callback } });
+                    method.Item2.Invoke(method.Item1, new object[] {
+                        new CallbackQueryData {
+                            Client = _client,
+                            CallbackQuery = callback,
+                            BotData = _botData
+                        }
+                    });
                 else if (parameterInfos.Length == 2)
                 {
                     Type type = parameterInfos[1].ParameterType;
                     CallbackQueryModel model = (CallbackQueryModel)JsonConvert.DeserializeObject(callback.Data, type);
-                    method.Item2.Invoke(method.Item1, new object[] { new CallbackQueryData { Client = _client, CallbackQuery = callback, Model = model } });
+                    method.Item2.Invoke(method.Item1, new object[] {
+                        new CallbackQueryData
+                        {
+                            Client = _client,
+                            CallbackQuery = callback,
+                            BotData = _botData,
+                            Model = model
+                        }
+                    });
                 }
             }
         }

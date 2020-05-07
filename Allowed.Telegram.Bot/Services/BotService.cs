@@ -1,5 +1,6 @@
 ﻿using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Handlers.MessageHandler;
+using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Allowed.Telegram.Bot.Services.TelegramServices;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,7 +49,7 @@ namespace Allowed.Telegram.Bot.Services
 
             foreach (ClientItem client in clientsCollection.Clients)
             {
-                IMessageHandler messageHandler = new MessageHandler(controllersCollection, client.Client, client.Name);
+                IMessageHandler messageHandler = new MessageHandler(controllersCollection, client.Client, client.BotData);
 
                 if (telegramService != null)
                 {
