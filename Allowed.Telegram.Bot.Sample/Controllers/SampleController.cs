@@ -2,8 +2,12 @@
 using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Store;
+using Allowed.Telegram.Bot.Sample.Models;
 using Allowed.Telegram.Bot.Services.TelegramServices;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
@@ -56,6 +60,33 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
                 data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed /start. Value = {message.Value}.");
                 _telegramService.SetState(data.Message.Chat.Id, null, "Another");
             }
+        }
+
+        [Command("query")]
+        public async Task CallCallbackQuery(MessageData data)
+        {
+            await data.Client.SendTextMessageAsync(
+                chatId: data.Message.Chat.Id,
+                text: $"Callback query",
+                replyMarkup: new InlineKeyboardMarkup(
+                    new InlineKeyboardButton
+                    {
+                        Text = "Test",
+                        CallbackData = JsonConvert.SerializeObject(
+                            new TestCallbackQueryModel
+                            {
+                                Path = "qa",
+                                SomeData = true
+                            })
+                    }
+                )
+            );
+        }
+
+        [CallbackQuery("qa")]
+        public void CallbackQuery(CallbackQueryData data, TestCallbackQueryModel model)
+        {
+
         }
 
         [TypedCommand(MessageType.Photo)]

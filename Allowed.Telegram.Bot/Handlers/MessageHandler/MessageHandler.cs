@@ -202,9 +202,9 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                         {
                             Client = _client,
                             CallbackQuery = callback,
-                            BotData = _botData,
-                            Model = model
-                        }
+                            BotData = _botData
+                        },
+                        model
                     });
                 }
             }
