@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Allowed.Telegram.Bot.Models.Store
+namespace Allowed.Telegram.Bot.Models.Store.Context
 {
     public class AllowedTelegramBotDbContext : DbContext
     {
@@ -9,6 +9,8 @@ namespace Allowed.Telegram.Bot.Models.Store
         public DbSet<TelegramState> TelegramStates { get; set; }
         public DbSet<TelegramUser> TelegramUsers { get; set; }
         public DbSet<TelegramBot> TelegramBots { get; set; }
+        public DbSet<TelegramRole> TelegramRoles { get; set; }
+        public DbSet<TelegramUserRole> TelegramUserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

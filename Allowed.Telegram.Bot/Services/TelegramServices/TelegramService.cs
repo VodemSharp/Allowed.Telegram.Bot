@@ -1,6 +1,8 @@
 ﻿using Allowed.Telegram.Bot.Models.Store;
+using Allowed.Telegram.Bot.Models.Store.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Allowed.Telegram.Bot.Services.TelegramServices
@@ -87,5 +89,108 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
 
             _db.SaveChanges();
         }
+
+        #region Roles
+
+        public IEnumerable<TelegramUser> GetUsersByRole(string role)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramUser).Include(tur => tur.TelegramRole)
+                .Where(tur => tur.TelegramRole.Name == role).Select(tur => tur.TelegramUser);
+        }
+
+        public IEnumerable<TelegramUser> GetUsersByRoles(IEnumerable<string> roles)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramUser).Include(tur => tur.TelegramRole)
+                .Where(tur => roles.Contains(tur.TelegramRole.Name)).Select(tur => tur.TelegramUser);
+        }
+
+        public IEnumerable<TelegramUser> GetUsersByRole(int roleId)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramUser).Include(tur => tur.TelegramRole)
+                .Where(tur => tur.TelegramRole.Id == roleId).Select(tur => tur.TelegramUser);
+        }
+
+        public IEnumerable<TelegramUser> GetUsersByRoles(IEnumerable<int> roleIds)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramUser).Include(tur => tur.TelegramRole)
+                .Where(tur => roleIds.Contains(tur.TelegramRole.Id)).Select(tur => tur.TelegramUser);
+        }
+
+        public IEnumerable<TelegramRole> GetRoles(long chatId)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramUser).Include(tur => tur.TelegramRole)
+                .Where(tur => tur.TelegramUser.ChatId == chatId).Select(tur => tur.TelegramRole);
+        }
+
+        public TelegramRole GetRole(int roleId)
+        {
+            return _db.TelegramRoles.FirstOrDefault(r => r.Id == roleId);
+        }
+
+        public TelegramRole GetRole(string role)
+        {
+            return _db.TelegramRoles.FirstOrDefault(r => r.Name == role);
+        }
+
+        public void AddRole(string role)
+        {
+            _db.TelegramRoles.Add(new TelegramRole
+            {
+                Name = role
+            });
+            _db.SaveChanges();
+        }
+
+        private void RemoveRole(TelegramRole role)
+        {
+            if (role != null)
+            {
+                _db.TelegramRoles.Remove(role);
+                _db.SaveChanges();
+            }
+        }
+
+        public void RemoveRole(string role)
+        {
+            RemoveRole(_db.TelegramRoles.FirstOrDefault(r => r.Name == role));
+        }
+
+        public void RemoveRole(int roleId)
+        {
+            RemoveRole(_db.TelegramRoles.FirstOrDefault(r => r.Id == roleId));
+        }
+
+        public void AddUserRole(long chatId, int roleId)
+        {
+            TelegramUser user = GetUser(chatId);
+
+            if (user != null)
+            {
+                _db.TelegramUserRoles.Add(new TelegramUserRole
+                {
+                    TelegramUserId = user.Id,
+                    TelegramRoleId = roleId
+                });
+                _db.SaveChanges();
+            }
+        }
+
+        public void AddUserRole(long chatId, string role)
+        {
+            TelegramUser user = GetUser(chatId);
+            TelegramRole roleEntity = GetRole(role);
+
+            if (user != null && roleEntity != null)
+            {
+                _db.TelegramUserRoles.Add(new TelegramUserRole
+                {
+                    TelegramUserId = user.Id,
+                    TelegramRoleId = roleEntity.Id
+                });
+                _db.SaveChanges();
+            }
+        }
+
+        #endregion
     }
 }
