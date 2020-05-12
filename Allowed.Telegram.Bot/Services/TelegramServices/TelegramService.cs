@@ -223,13 +223,13 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
             return _db.TelegramRoles.Any(r => r.Name == role);
         }
 
-        public bool AnyUserRole(int chatId, int roleId)
+        public bool AnyUserRole(long chatId, int roleId)
         {
             return _db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
                 .Any(r => r.TelegramUser.ChatId == chatId && r.TelegramRoleId == roleId);
         }
 
-        public bool AnyUserRole(int chatId, string role)
+        public bool AnyUserRole(long chatId, string role)
         {
             return _db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
                 .Any(r => r.TelegramUser.ChatId == chatId && r.TelegramRole.Name == role);

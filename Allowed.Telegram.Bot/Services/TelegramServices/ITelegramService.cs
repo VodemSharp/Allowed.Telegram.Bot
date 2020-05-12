@@ -51,8 +51,8 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
         void RemoveUserRole(long chatId, int roleId);
         void RemoveUserRole(long chatId, string role);
 
-        bool AnyUserRole(int chatId, int roleId);
-        bool AnyUserRole(int chatId, string role);
+        bool AnyUserRole(long chatId, int roleId);
+        bool AnyUserRole(long chatId, string role);
 
         #endregion
     }
