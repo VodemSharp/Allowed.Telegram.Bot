@@ -21,18 +21,38 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
 
         #region Roles
 
+        IEnumerable<TelegramRole> GetRoles(long chatId);
+        TelegramRole GetRole(int roleId);
+        TelegramRole GetRole(string role);
+
+        void AddRole(string role);
+
+        void UpdateRole(string oldRoleName, string newRoleName);
+        void UpdateRole(int roleId, string roleName);
+
+        void RemoveRole(string role);
+        void RemoveRole(int roleId);
+
+        bool AnyRole(int roleId);
+        bool AnyRole(string role);
+
+        #endregion
+
+        #region UserRoles
+
         IEnumerable<TelegramUser> GetUsersByRole(string role);
         IEnumerable<TelegramUser> GetUsersByRole(int roleId);
         IEnumerable<TelegramUser> GetUsersByRoles(IEnumerable<string> roles);
         IEnumerable<TelegramUser> GetUsersByRoles(IEnumerable<int> roleIds);
-        IEnumerable<TelegramRole> GetRoles(long chatId);
-        TelegramRole GetRole(int roleId);
-        TelegramRole GetRole(string role);
-        void AddRole(string role);
-        void RemoveRole(string role);
-        void RemoveRole(int roleId);
+
         void AddUserRole(long chatId, int roleId);
         void AddUserRole(long chatId, string role);
+
+        void RemoveUserRole(long chatId, int roleId);
+        void RemoveUserRole(long chatId, string role);
+
+        bool AnyUserRole(int chatId, int roleId);
+        bool AnyUserRole(int chatId, string role);
 
         #endregion
     }

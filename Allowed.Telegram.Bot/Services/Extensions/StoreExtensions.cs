@@ -1,4 +1,4 @@
-﻿using Allowed.Telegram.Bot.Models.Store;
+﻿using Allowed.Telegram.Bot.Models.Store.Context;
 using Allowed.Telegram.Bot.Services.TelegramServices;
 using Microsoft.Extensions.DependencyInjection;
 

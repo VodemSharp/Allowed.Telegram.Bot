@@ -191,6 +191,74 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
             }
         }
 
+        public void UpdateRole(string oldRoleName, string newRoleName)
+        {
+            TelegramRole role = GetRole(oldRoleName);
+
+            if (role != null)
+            {
+                role.Name = newRoleName;
+                _db.SaveChanges();
+            }
+        }
+
+        public void UpdateRole(int roleId, string roleName)
+        {
+            TelegramRole role = GetRole(roleId);
+
+            if (role != null)
+            {
+                role.Name = roleName;
+                _db.SaveChanges();
+            }
+        }
+
+        public bool AnyRole(int roleId)
+        {
+            return _db.TelegramRoles.Any(r => r.Id == roleId);
+        }
+
+        public bool AnyRole(string role)
+        {
+            return _db.TelegramRoles.Any(r => r.Name == role);
+        }
+
+        public bool AnyUserRole(int chatId, int roleId)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
+                .Any(r => r.TelegramUser.ChatId == chatId && r.TelegramRoleId == roleId);
+        }
+
+        public bool AnyUserRole(int chatId, string role)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
+                .Any(r => r.TelegramUser.ChatId == chatId && r.TelegramRole.Name == role);
+        }
+
+        private TelegramUserRole GetUserRole(long chatId, int roleId)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
+                .FirstOrDefault(r => r.TelegramUser.ChatId == chatId && r.TelegramRoleId == roleId);
+        }
+
+        private TelegramUserRole GetUserRole(long chatId, string role)
+        {
+            return _db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
+                .FirstOrDefault(r => r.TelegramUser.ChatId == chatId && r.TelegramRole.Name == role);
+        }
+
+        public void RemoveUserRole(long chatId, int roleId)
+        {
+            _db.TelegramUserRoles.Remove(GetUserRole(chatId, roleId));
+            _db.SaveChanges();
+        }
+
+        public void RemoveUserRole(long chatId, string role)
+        {
+            _db.TelegramUserRoles.Remove(GetUserRole(chatId, role));
+            _db.SaveChanges();
+        }
+
         #endregion
     }
 }
