@@ -40,7 +40,7 @@ namespace Allowed.Telegram.Bot.Sample
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Allowed Telegram Bot version 1.2.0!");
+                    await context.Response.WriteAsync("Allowed Telegram Bot version 1.3.2!");
                 });
             });
         }
