@@ -49,7 +49,8 @@ namespace Allowed.Telegram.Bot.Services
 
             foreach (ClientItem client in clientsCollection.Clients)
             {
-                IMessageHandler messageHandler = new MessageHandler(controllersCollection, client.Client, client.BotData);
+                IMessageHandler messageHandler = new MessageHandler(controllersCollection, client.Client, client.BotData,
+                                                                    telegramService);
 
                 if (telegramService != null)
                 {

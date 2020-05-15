@@ -1,15 +1,17 @@
-﻿using Allowed.Telegram.Bot.Controllers;
-using Allowed.Telegram.Bot.Services.TelegramServices;
+﻿using Allowed.Telegram.Bot.Attributes;
+using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Models;
+using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
+    [Role("admin")]
     public class RolesController : CommandController
     {
-        private readonly ITelegramService _telegramService;
-        
-        public RolesController(ITelegramService telegramService)
+        [Command("admin_role_controller")]
+        public async Task RoleControllerMethod(MessageData data)
         {
-            _telegramService = telegramService;
+            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You have permission for this command in controller!");
         }
     }
 }
