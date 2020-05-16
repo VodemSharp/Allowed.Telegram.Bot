@@ -156,14 +156,18 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method != null && method.Controller != null && method.Method != null)
             {
-                method.Method.Invoke(method.Controller, new object[] {
-                    new MessageData
+                ParameterInfo[] methodParams = method.Method.GetParameters();
+                List<object> parameters = new List<object> { };
+
+                if (methodParams.Any(p => p.ParameterType == typeof(MessageData)))
+                    parameters.Add(new MessageData
                     {
                         Message = message,
                         Client = _client,
                         BotData = _botData
-                    }
-                });
+                    });
+
+                method.Method.Invoke(method.Controller, parameters.ToArray());
             }
         }
 
@@ -173,31 +177,27 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             if (method.Controller != null && method.Method != null)
             {
-                ParameterInfo[] parameterInfos = method.Method.GetParameters();
+                ParameterInfo[] methodParams = method.Method.GetParameters();
+                List<object> parameters = new List<object> { };
 
-                if (parameterInfos.Length == 1)
-                    method.Method.Invoke(method.Controller, new object[] {
-                        new CallbackQueryData {
-                            Client = _client,
-                            CallbackQuery = callback,
-                            BotData = _botData
-                        }
+                if (methodParams.Any(p => p.ParameterType == typeof(CallbackQueryData)))
+                    parameters.Add(new CallbackQueryData
+                    {
+                        Client = _client,
+                        CallbackQuery = callback,
+                        BotData = _botData
                     });
-                else if (parameterInfos.Length == 2)
-                {
-                    Type parameterType = parameterInfos[1].ParameterType;
-                    CallbackQueryModel model = (CallbackQueryModel)JsonConvert.DeserializeObject(callback.Data, parameterType);
 
-                    method.Method.Invoke(method.Controller, new object[] {
-                        new CallbackQueryData
-                        {
-                            Client = _client,
-                            CallbackQuery = callback,
-                            BotData = _botData
-                        },
-                        model
-                    });
-                }
+                Type callbackType = typeof(CallbackQueryModel);
+
+                if (methodParams.Any(p => p.ParameterType == callbackType))
+                    parameters.Add(JsonConvert.DeserializeObject(callback.Data, callbackType));
+
+                if (methodParams.Any(p => p.ParameterType.IsSubclassOf(callbackType)))
+                    parameters.Add(JsonConvert.DeserializeObject(
+                        callback.Data, methodParams.First(p => p.ParameterType.IsSubclassOf(callbackType)).ParameterType));
+
+                method.Method.Invoke(method.Controller, parameters.ToArray());
             }
         }
 

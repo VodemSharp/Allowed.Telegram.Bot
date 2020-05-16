@@ -12,7 +12,7 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
     public class CallbackController : CommandController
     {
         [Command("query")]
-        public async Task CallCallbackQuery(MessageData data)
+        public async Task CallbackQuery(MessageData data)
         {
             await data.Client.SendTextMessageAsync(
                 chatId: data.Message.Chat.Id,
