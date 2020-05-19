@@ -3,11 +3,11 @@
 namespace Allowed.Telegram.Bot.Attributes
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class SmileCommandAttribute : Attribute
+    public class EmojiCommandAttribute : Attribute
     {
         private readonly string _smile;
 
-        public SmileCommandAttribute(string smile)
+        public EmojiCommandAttribute(string smile)
         {
             _smile = smile;
         }

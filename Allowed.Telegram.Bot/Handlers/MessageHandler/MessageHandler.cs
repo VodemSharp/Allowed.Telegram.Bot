@@ -1,6 +1,6 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
-using Allowed.Telegram.Bot.Constants;
 using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Helpers;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Store;
 using Allowed.Telegram.Bot.Services.Extensions.Collections;
@@ -99,7 +99,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             else if (type == MethodType.BySmile)
             {
                 method = allowedMethods
-                            .FirstOrDefault(m => ((SmileCommandAttribute[])m.GetCustomAttributes(typeof(SmileCommandAttribute), false))
+                            .FirstOrDefault(m => ((EmojiCommandAttribute[])m.GetCustomAttributes(typeof(EmojiCommandAttribute), false))
                             .Any(a => message.Text.StartsWith(a.GetSmile())));
             }
             else if (type == MethodType.Default)
@@ -203,12 +203,14 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
         private bool IsFirstSmile(string text)
         {
-            FieldInfo[] fieldInfos = typeof(CommandSmiles.People).GetFields(
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            //FieldInfo[] fieldInfos = typeof(CommandSmiles.People).GetFields(
+            //    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
-            fieldInfos = fieldInfos.Where(fi => fi.IsLiteral && !fi.IsInitOnly).ToArray();
+            //fieldInfos = fieldInfos.Where(fi => fi.IsLiteral && !fi.IsInitOnly).ToArray();
 
-            return fieldInfos.Any(fi => text.StartsWith((string)fi.GetValue(null)));
+            //return fieldInfos.Any(fi => text.StartsWith((string)fi.GetValue(null)));
+
+            return EmojiHelper.IsStartEmoji(text);
         }
 
         public void OnMessage(object sender, MessageEventArgs e)
