@@ -17,7 +17,7 @@ namespace Allowed.Telegram.Bot.Sample.NoDb
             services
                 .AddTelegramControllers(new BotData[] {
                     new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
-                })
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
