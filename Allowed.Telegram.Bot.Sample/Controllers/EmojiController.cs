@@ -18,5 +18,11 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         {
             await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You start with: 🤡");
         }
+
+        [EmojiDefaultCommand]
+        public async Task EmojiDefault(MessageData data)
+        {
+            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You start with default smile");
+        }
     }
 }

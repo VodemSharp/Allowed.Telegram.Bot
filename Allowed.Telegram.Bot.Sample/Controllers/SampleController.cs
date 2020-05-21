@@ -42,5 +42,11 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
 
             await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You remove admin role!");
         }
+
+        [DefaultCommand]
+        public async Task DefaultCommand(MessageData data)
+        {
+            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed unknown command: {data.Message.Text}");
+        }
     }
 }

@@ -55,30 +55,40 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             return (RoleAttribute[])method.GetCustomAttributes(typeof(RoleAttribute), false);
         }
 
-        private enum MethodType
+        private StateAttribute[] GetStateAttributes(CommandController controller)
         {
-            ByPath, BySmile, ByType, Default, Callback
+            return (StateAttribute[])controller.GetType().GetCustomAttributes(typeof(StateAttribute), false);
         }
 
-        private MethodInfo[] GetAllowedMethods(long chatId)
+        private StateAttribute[] GetStateAttributes(MethodInfo method)
+        {
+            return (StateAttribute[])method.GetCustomAttributes(typeof(StateAttribute), false);
+        }
+
+        private enum MethodType
+        {
+            ByPath, BySmile, ByType, Text, Callback
+        }
+
+        private MethodInfo[] GetAllowedMethods(List<TelegramRole> userRoles = null, TelegramState userState = null)
         {
             if (_telegramService != null)
             {
-                List<TelegramRole> userRoles = _telegramService.GetRoles(chatId).ToList();
-
                 return _controllers.Where(c =>
                     {
                         RoleAttribute[] roles = GetRoleAttributes(c);
+                        StateAttribute[] states = GetStateAttributes(c);
 
-                        return roles.Length == 0
-                            || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ur.Name));
+                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ur.Name)))
+                        && (states.Length == 0 || states.Any(s => s.GetState() == userState?.Value));
                     })
                     .SelectMany(c => c.GetType().GetMethods().Where(m =>
                     {
                         RoleAttribute[] roles = GetRoleAttributes(m);
+                        StateAttribute[] states = GetStateAttributes(m);
 
-                        return roles.Length == 0
-                            || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ur.Name));
+                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ur.Name)))
+                        && (states.Length == 0 || states.Any(s => s.GetState() == userState?.Value));
                     })).ToArray();
             }
 
@@ -88,25 +98,59 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         private TelegramMethod GetMethod(MethodType type, Message message)
         {
             MethodInfo method = null;
-            MethodInfo[] allowedMethods = GetAllowedMethods(message.Chat.Id);
+            MethodInfo[] allowedMethods;
+
+            List<TelegramRole> userRoles = null;
+            TelegramState userState = null;
+
+
+            if (_telegramService != null)
+            {
+                userRoles = _telegramService.GetRoles(message.Chat.Id).ToList();
+                userState = _telegramService.GetState(message.Chat.Id);
+            }
+            else
+            {
+                userRoles = new List<TelegramRole> { };
+            }
+
+            allowedMethods = GetAllowedMethods(userRoles, userState);
 
             if (type == MethodType.ByPath)
             {
                 method = allowedMethods
                             .FirstOrDefault(m => ((CommandAttribute[])m.GetCustomAttributes(typeof(CommandAttribute), false))
                             .Any(a => $"/{a.GetPath()}" == message.Text));
+
+                if (method == null)
+                    method = allowedMethods
+                            .FirstOrDefault(m => ((DefaultCommandAttribute[])m.GetCustomAttributes(typeof(DefaultCommandAttribute), false))
+                            .Any());
             }
             else if (type == MethodType.BySmile)
             {
                 method = allowedMethods
                             .FirstOrDefault(m => ((EmojiCommandAttribute[])m.GetCustomAttributes(typeof(EmojiCommandAttribute), false))
                             .Any(a => message.Text.StartsWith(a.GetSmile())));
-            }
-            else if (type == MethodType.Default)
-            {
-                method = allowedMethods
-                            .FirstOrDefault(m => ((DefaultCommandAttribute[])m.GetCustomAttributes(typeof(DefaultCommandAttribute), false))
+
+                if (method == null)
+                    method = allowedMethods
+                            .FirstOrDefault(m => ((EmojiDefaultCommandAttribute[])m.GetCustomAttributes(typeof(EmojiDefaultCommandAttribute), false))
                             .Any());
+            }
+            else if (type == MethodType.Text)
+            {
+                List<MethodInfo> methods = allowedMethods
+                            .Where(m => ((TextCommandAttribute[])m.GetCustomAttributes(typeof(TextCommandAttribute), false))
+                            .Any()).ToList();
+
+                if (methods.Count != 0)
+                {
+                    method = methods.FirstOrDefault(m => ((StateAttribute[])m.GetCustomAttributes(typeof(StateAttribute))).Any(s => s.GetState() == userState.Value));
+
+                    if (method == null)
+                        method = methods.FirstOrDefault(m => !m.GetCustomAttributes(typeof(StateAttribute)).Any());
+                }
             }
             else if (type == MethodType.ByType)
             {
@@ -203,13 +247,6 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
         private bool IsFirstSmile(string text)
         {
-            //FieldInfo[] fieldInfos = typeof(CommandSmiles.People).GetFields(
-            //    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-
-            //fieldInfos = fieldInfos.Where(fi => fi.IsLiteral && !fi.IsInitOnly).ToArray();
-
-            //return fieldInfos.Any(fi => text.StartsWith((string)fi.GetValue(null)));
-
             return EmojiHelper.IsStartEmoji(text);
         }
 
@@ -225,7 +262,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                     else if (IsFirstSmile(message.Text))
                         InvokeMethod(MethodType.BySmile, message);
                     else
-                        InvokeMethod(MethodType.Default, message);
+                        InvokeMethod(MethodType.Text, message);
                     break;
                 default:
                     InvokeMethod(MethodType.ByType, message);
