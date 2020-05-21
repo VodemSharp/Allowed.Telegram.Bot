@@ -3,7 +3,7 @@ using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Models;
 using System.Threading.Tasks;
 
-namespace Allowed.Telegram.Bot.Sample.Controllers
+namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers
 {
     public class SampleController : CommandController
     {
@@ -12,7 +12,7 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         {
             await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed: /start");
         }
-        
+
         [DefaultCommand]
         public async Task DefaultCommand(MessageData data)
         {

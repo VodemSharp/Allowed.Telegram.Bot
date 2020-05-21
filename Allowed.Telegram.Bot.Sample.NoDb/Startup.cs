@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Allowed.Telegram.Bot.Sample.WithoutDb
+namespace Allowed.Telegram.Bot.Sample.NoDb
 {
     public class Startup
     {
@@ -17,7 +17,7 @@ namespace Allowed.Telegram.Bot.Sample.WithoutDb
             services
                 .AddTelegramControllers(new BotData[] {
                     new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
-                });
+                })
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -34,7 +34,7 @@ namespace Allowed.Telegram.Bot.Sample.WithoutDb
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Allowed.Telegram.Bot 1.3.5 without database!");
+                    await context.Response.WriteAsync("Allowed.Telegram.Bot version 1.4.0!");
                 });
             });
         }
