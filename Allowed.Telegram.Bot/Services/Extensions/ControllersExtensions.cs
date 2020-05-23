@@ -26,7 +26,7 @@ namespace Allowed.Telegram.Bot.Services.Extensions
 
         private static void AddTelegramClients(this IServiceCollection services, IEnumerable<BotData> data)
         {
-            services.TryAddSingleton<IClientsCollection>(
+            services.TryAddTransient<IClientsCollection>((servs) =>
                 new ClientsCollection
                 {
                     Clients = data

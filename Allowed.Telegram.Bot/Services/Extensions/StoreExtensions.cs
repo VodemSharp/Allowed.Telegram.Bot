@@ -8,8 +8,8 @@ namespace Allowed.Telegram.Bot.Services.Extensions
     {
         public static IServiceCollection AddTelegramStore<T>(this IServiceCollection services) where T: AllowedTelegramBotDbContext
         {
-            services.AddSingleton<AllowedTelegramBotDbContext, T>();
-            services.AddSingleton<ITelegramService, TelegramService>();
+            services.AddTransient<AllowedTelegramBotDbContext, T>();
+            services.AddTransient<ITelegramService, TelegramService>();
 
             return services;
         }

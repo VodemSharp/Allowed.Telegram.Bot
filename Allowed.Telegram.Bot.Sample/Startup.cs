@@ -17,7 +17,8 @@ namespace Allowed.Telegram.Bot.Sample
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(AllowedConstants.DbConnection), ServiceLifetime.Singleton);
+            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(AllowedConstants.DbConnection), 
+                ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             services
                 .AddTelegramControllers(new BotData[] {
@@ -40,7 +41,7 @@ namespace Allowed.Telegram.Bot.Sample
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Allowed Telegram Bot version 1.4.0!");
+                    await context.Response.WriteAsync("Allowed Telegram Bot version 1.4.1!");
                 });
             });
         }
