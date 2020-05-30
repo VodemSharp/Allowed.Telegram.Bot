@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
-    [BotName("Sample")]
     public class SampleController : CommandController
     {
         private readonly ITelegramService _telegramService;

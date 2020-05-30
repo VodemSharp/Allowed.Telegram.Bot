@@ -1,13 +1,13 @@
+using Allowed.Telegram.Bot.Data.Constants;
+using Allowed.Telegram.Bot.Models;
+using Allowed.Telegram.Bot.Sample.Data;
+using Allowed.Telegram.Bot.Services.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Allowed.Telegram.Bot.Services.Extensions;
-using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Data.Constants;
-using Allowed.Telegram.Bot.Sample.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace Allowed.Telegram.Bot.Sample
 {
@@ -22,7 +22,8 @@ namespace Allowed.Telegram.Bot.Sample
 
             services
                 .AddTelegramControllers(new BotData[] {
-                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
+                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample1" },
+                    new BotData { Token = "1289911268:AAE4j2kkt8dPZKKr2MLpGLTP65gvaKA-sDA", Name = "Sample2" },
                 })
                 .AddTelegramStore<ApplicationDbContext>();
         }
@@ -41,7 +42,7 @@ namespace Allowed.Telegram.Bot.Sample
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Allowed Telegram Bot version 1.4.1!");
+                    await context.Response.WriteAsync("Allowed Telegram Bot version 1.4.2!");
                 });
             });
         }

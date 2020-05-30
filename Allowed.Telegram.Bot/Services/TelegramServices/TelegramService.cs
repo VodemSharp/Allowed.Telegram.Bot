@@ -53,7 +53,7 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
             if (string.IsNullOrEmpty(botName))
                 return _db.TelegramStates.FirstOrDefault(m => m.TelegramUserId == user.Id);
             else
-                return _db.TelegramStates.Include(lm => lm.TelegramBot)
+                return _db.TelegramStates.Include(ts => ts.TelegramBot)
                     .FirstOrDefault(m => m.TelegramUserId == user.Id && m.TelegramBot.Name == botName);
         }
 
@@ -70,9 +70,9 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
         {
             TelegramUser telegramUser = GetUser(chatId);
             TelegramBot telegramBot = GetBot(botName);
-            TelegramState message = GetStateByUserId(telegramUser.Id, botName);
+            TelegramState state = GetStateByUserId(telegramUser.Id, botName);
 
-            if (message == null)
+            if (state == null)
             {
                 _db.TelegramStates.Add(new TelegramState
                 {
@@ -83,8 +83,8 @@ namespace Allowed.Telegram.Bot.Services.TelegramServices
             }
             else
             {
-                message.Value = value;
-                _db.TelegramStates.Update(message);
+                state.Value = value;
+                _db.TelegramStates.Update(state);
             }
 
             _db.SaveChanges();

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Telegram.Bot;
 
 namespace Allowed.Telegram.Bot.Services
 {
@@ -22,11 +23,9 @@ namespace Allowed.Telegram.Bot.Services
 
         public IServiceProvider Services { get; }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            DoWork(stoppingToken);
-
-            return Task.CompletedTask;
+            await DoWork(stoppingToken);
         }
 
         private List<CommandController> GetCommandControllers()
@@ -37,43 +36,62 @@ namespace Allowed.Telegram.Bot.Services
                         .Select(t => (CommandController)ActivatorUtilities.CreateInstance(Services, t)).ToList();
         }
 
-        private void DoWork(CancellationToken stoppingToken)
+        private IControllersCollection GetControllersCollection()
         {
-            IClientsCollection clientsCollection = (IClientsCollection)Services.GetService(typeof(IClientsCollection));
-            ITelegramService telegramService = (ITelegramService)Services.GetService(typeof(ITelegramService));
-
-            IControllersCollection controllersCollection = new ControllersCollection
+            return new ControllersCollection
             {
                 Controllers = GetCommandControllers()
             };
+        }
+
+        private ITelegramService GetTelegramService()
+        {
+            return (ITelegramService)Services.GetService(typeof(ITelegramService));
+        }
+
+        private IMessageHandler GetMessageHandler(ITelegramService telegramService, ITelegramBotClient client, BotData botData)
+        {
+            return new MessageHandler(GetControllersCollection(), client, botData, telegramService);
+        }
+
+        public virtual async Task DoWork(CancellationToken stoppingToken)
+        {
+            IClientsCollection clientsCollection = (IClientsCollection)Services.GetService(typeof(IClientsCollection));
 
             foreach (ClientItem client in clientsCollection.Clients)
             {
-                IMessageHandler messageHandler = new MessageHandler(controllersCollection, client.Client, client.BotData,
-                                                                    telegramService);
-
-                if (telegramService != null)
+                if (GetTelegramService() != null)
                 {
                     client.Client.OnMessage += (a, b) =>
                     {
+                        ITelegramService telegramService = GetTelegramService();
+                        IMessageHandler messageHandler = GetMessageHandler(telegramService, client.Client, client.BotData);
+
                         telegramService.CheckUser(b.Message.Chat.Id, b.Message.Chat.Username);
                         messageHandler.OnMessage(a, b);
                     };
 
                     client.Client.OnCallbackQuery += (a, b) =>
                     {
+                        ITelegramService telegramService = GetTelegramService();
+                        IMessageHandler messageHandler = GetMessageHandler(telegramService, client.Client, client.BotData);
+
                         telegramService.CheckUser(b.CallbackQuery.Message.Chat.Id, b.CallbackQuery.Message.Chat.Username);
                         messageHandler.OnCallbackQuery(a, b);
                     };
                 }
                 else
                 {
+                    IMessageHandler messageHandler = GetMessageHandler(null, client.Client, client.BotData);
+
                     client.Client.OnMessage += (a, b) => messageHandler.OnMessage(a, b);
                     client.Client.OnCallbackQuery += (a, b) => messageHandler.OnCallbackQuery(a, b);
                 }
 
                 client.Client.StartReceiving();
             }
+
+            await Task.Delay(Timeout.Infinite);
         }
 
         public override async Task StopAsync(CancellationToken stoppingToken)

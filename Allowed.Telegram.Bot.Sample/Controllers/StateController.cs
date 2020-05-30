@@ -16,6 +16,13 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
             _telegramService = telegramService;
         }
 
+        [Command("get_state")]
+        public async Task GetState(MessageData messageData)
+        {
+            await messageData.Client.SendTextMessageAsync(messageData.Message.Chat.Id,
+                _telegramService.GetState(messageData.Message.Chat.Id).Value);
+        }
+
         [Command("set_state_test1")]
         public async Task SetTest1State(MessageData messageData)
         {
