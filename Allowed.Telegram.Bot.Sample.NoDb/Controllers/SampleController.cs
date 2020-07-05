@@ -18,5 +18,11 @@ namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers
         {
             await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed unknown command: {data.Message.Text}");
         }
+
+        [TextCommand]
+        public async Task TextCommand(MessageData data)
+        {
+            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You say: {data.Message.Text}");
+        }
     }
 }

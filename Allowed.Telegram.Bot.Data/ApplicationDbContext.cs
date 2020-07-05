@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Allowed.Telegram.Bot.Sample.Data
 {
-    public class ApplicationDbContext : AllowedTelegramBotDbContext
+    public class ApplicationDbContext : TelegramBotDbContext
     {
         public DbSet<UserFile> UserFiles { get; set; }
 

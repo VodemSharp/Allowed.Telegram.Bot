@@ -1,11 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Allowed.Telegram.Bot.Models.Store
 {
-    public class TelegramRole
+    public class TelegramRole<TKey>
+        where TKey : IEquatable<TKey>
     {
         [Key]
-        public int Id { get; set; }
+        public TKey Id { get; set; }
         public string Name { get; set; }
     }
 }

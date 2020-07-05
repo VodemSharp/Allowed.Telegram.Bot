@@ -1,19 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Allowed.Telegram.Bot.Models.Store
 {
-    public class TelegramUserRole
+    public class TelegramUserRole<TKey>
+        where TKey : IEquatable<TKey>
     {
-        [Key]
-        public int Id { get; set; }
-
         [ForeignKey("TelegramUser")]
-        public int TelegramUserId { get; set; }
-        public TelegramUser TelegramUser { get; set; }
+        public TKey TelegramUserId { get; set; }
+        public TelegramUser<TKey> TelegramUser { get; set; }
 
         [ForeignKey("TelegramRole")]
-        public int TelegramRoleId { get; set; }
-        public TelegramRole TelegramRole { get; set; }
+        public TKey TelegramRoleId { get; set; }
+        public TelegramRole<TKey> TelegramRole { get; set; }
     }
 }

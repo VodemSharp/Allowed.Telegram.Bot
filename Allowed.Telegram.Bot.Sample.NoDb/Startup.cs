@@ -34,7 +34,7 @@ namespace Allowed.Telegram.Bot.Sample.NoDb
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Allowed.Telegram.Bot version 1.4.0!");
+                    await context.Response.WriteAsync("Allowed.Telegram.Bot version 2.0.0!");
                 });
             });
         }

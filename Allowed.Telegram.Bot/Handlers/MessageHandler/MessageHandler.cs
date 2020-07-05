@@ -4,7 +4,8 @@ using Allowed.Telegram.Bot.Helpers;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Store;
 using Allowed.Telegram.Bot.Services.Extensions.Collections;
-using Allowed.Telegram.Bot.Services.TelegramServices;
+using Allowed.Telegram.Bot.Services.RoleServices;
+using Allowed.Telegram.Bot.Services.StateServices;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,16 +18,20 @@ using Telegram.Bot.Types.Enums;
 
 namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 {
-    public class MessageHandler : IMessageHandler
+    public class MessageHandler<TRole, TState> : IMessageHandler
+
+        where TRole : class
+        where TState : class
     {
         private readonly ITelegramBotClient _client;
         private readonly List<CommandController> _controllers;
         private readonly BotData _botData;
 
-        private readonly ITelegramService _telegramService;
+        private readonly IRoleService<TRole> _roleService;
+        private readonly IStateService<TState> _stateService;
 
         public MessageHandler(IControllersCollection collection, ITelegramBotClient client, BotData botData,
-            ITelegramService telegramService)
+            IRoleService<TRole> roleService, IStateService<TState> stateService)
         {
             _client = client;
             _botData = botData;
@@ -37,7 +42,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                     return attributes.Length == 0 || attributes.Any(a => a.GetName() == botData.Name);
                 }).ToList();
 
-            _telegramService = telegramService;
+            _roleService = roleService;
+            _stateService = stateService;
         }
 
         private BotNameAttribute[] GetBotNameAttributes(CommandController controller)
@@ -70,25 +76,30 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             ByPath, BySmile, ByType, Text, Callback
         }
 
-        private MethodInfo[] GetAllowedMethods(List<TelegramRole> userRoles = null, TelegramState userState = null)
+        private string GetStateValue(TState userState)
         {
-            if (_telegramService != null)
+            return userState == null ? null : (string)ReflectionHelper.GetProperty(userState, "Value");
+        }
+
+        private MethodInfo[] GetAllowedMethods(List<TRole> userRoles = null, TState userState = null)
+        {
+            if (userState != null)
             {
                 return _controllers.Where(c =>
                     {
                         RoleAttribute[] roles = GetRoleAttributes(c);
                         StateAttribute[] states = GetStateAttributes(c);
 
-                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ur.Name)))
-                        && (states.Length == 0 || states.Any(s => s.GetState() == userState?.Value));
+                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ReflectionHelper.GetProperty(ur, "Name"))))
+                        && (states.Length == 0 || states.Any(s => s.GetState() == GetStateValue(userState)));
                     })
                     .SelectMany(c => c.GetType().GetMethods().Where(m =>
                     {
                         RoleAttribute[] roles = GetRoleAttributes(m);
                         StateAttribute[] states = GetStateAttributes(m);
 
-                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ur.Name)))
-                        && (states.Length == 0 || states.Any(s => s.GetState() == userState?.Value));
+                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ReflectionHelper.GetProperty(ur, "Name"))))
+                        && (states.Length == 0 || states.Any(s => s.GetState() == GetStateValue(userState)));
                     })).ToArray();
             }
 
@@ -100,18 +111,18 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             MethodInfo method = null;
             MethodInfo[] allowedMethods;
 
-            List<TelegramRole> userRoles = null;
-            TelegramState userState = null;
+            List<TRole> userRoles = null;
+            TState userState = null;
 
 
-            if (_telegramService != null)
+            if (_roleService != null && _stateService != null)
             {
-                userRoles = _telegramService.GetRoles(message.Chat.Id).ToList();
-                userState = _telegramService.GetState(message.Chat.Id);
+                userRoles = _roleService.GetRoles(message.Chat.Id).ToList();
+                userState = _stateService.GetState(message.Chat.Id);
             }
             else
             {
-                userRoles = new List<TelegramRole> { };
+                userRoles = new List<TRole> { };
             }
 
             allowedMethods = GetAllowedMethods(userRoles, userState);
@@ -146,7 +157,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
                 if (methods.Count != 0)
                 {
-                    method = methods.FirstOrDefault(m => ((StateAttribute[])m.GetCustomAttributes(typeof(StateAttribute))).Any(s => s.GetState() == userState.Value));
+                    method = methods.FirstOrDefault(m => ((StateAttribute[])m.GetCustomAttributes(typeof(StateAttribute))).Any(s => s.GetState() == GetStateValue(userState)));
 
                     if (method == null)
                         method = methods.FirstOrDefault(m => !m.GetCustomAttributes(typeof(StateAttribute)).Any());

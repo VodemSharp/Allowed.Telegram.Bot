@@ -11,7 +11,7 @@ namespace Allowed.Telegram.Bot.Data.DbModels
 
         [ForeignKey("TelegramUser")]
         public int TelegramUserId { get; set; }
-        public TelegramUser TelegramUser { get; set; }
+        public TelegramUser<int> TelegramUser { get; set; }
 
         public string Type { get; set; }
         public string Value { get; set; }
