@@ -5,9 +5,9 @@ using Allowed.Telegram.Bot.Services.UserServices;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace Allowed.Telegram.Bot.Services.Extensions
+namespace Allowed.Telegram.Bot.Extensions
 {
-    public static class ServicesExtensions
+    public static class StoreExtensions
     {
         public static IServiceCollection AddTelegramStore<TContext>(this IServiceCollection services)
             where TContext : class

@@ -1,7 +1,7 @@
 ﻿using Allowed.Telegram.Bot.Models;
 using Telegram.Bot;
 
-namespace Allowed.Telegram.Bot.Services.Extensions.Collections
+namespace Allowed.Telegram.Bot.Extensions.Collections.Items
 {
     public class ClientItem
     {

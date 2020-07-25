@@ -1,8 +1,8 @@
 ﻿using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Extensions.Collections;
+using Allowed.Telegram.Bot.Extensions.Collections.Items;
 using Allowed.Telegram.Bot.Handlers.MessageHandler;
 using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Options;
-using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -29,31 +29,30 @@ namespace Allowed.Telegram.Bot.Services.BotServices
             await DoWork(stoppingToken);
         }
 
-        protected List<CommandController> GetCommandControllers()
+        protected List<Type> GetCommandControllerTypes()
         {
             return AppDomain.CurrentDomain.GetAssemblies()
                         .SelectMany(s => s.GetTypes())
-                        .Where(p => p.IsSubclassOf(typeof(CommandController)))
-                        .Select(t => (CommandController)ActivatorUtilities.CreateInstance(Services, t)).ToList();
+                        .Where(p => p.IsSubclassOf(typeof(CommandController))).ToList();
         }
 
-        protected IControllersCollection GetControllersCollection()
+        protected ControllersCollection GetControllersCollection()
         {
             return new ControllersCollection
             {
-                Controllers = GetCommandControllers()
+                ControllerTypes = GetCommandControllerTypes()
             };
         }
 
         protected IMessageHandler GetMessageHandler(ITelegramBotClient client, BotData botData)
         {
-            return new MessageHandler<object, object>(GetControllersCollection(), client, botData, null, null);
+            return new MessageHandler<object, object>(GetControllersCollection(),
+                client, botData, null, null, Services);
         }
 
         protected virtual async Task DoWork(CancellationToken stoppingToken)
         {
-            IClientsCollection clientsCollection = Services.GetService<IClientsCollection>();
-            ContextOptions options = Services.GetService<ContextOptions>();
+            ClientsCollection clientsCollection = Services.GetService<ClientsCollection>();
 
             foreach (ClientItem client in clientsCollection.Clients)
             {
@@ -66,11 +65,6 @@ namespace Allowed.Telegram.Bot.Services.BotServices
             }
 
             await Task.Delay(Timeout.Infinite);
-        }
-
-        public override async Task StopAsync(CancellationToken stoppingToken)
-        {
-            await Task.CompletedTask;
         }
     }
 }

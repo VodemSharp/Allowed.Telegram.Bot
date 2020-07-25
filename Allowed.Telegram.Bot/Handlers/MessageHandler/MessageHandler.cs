@@ -1,11 +1,11 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Helpers;
 using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Models.Store;
-using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Allowed.Telegram.Bot.Services.RoleServices;
 using Allowed.Telegram.Bot.Services.StateServices;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -24,18 +24,20 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         where TState : class
     {
         private readonly ITelegramBotClient _client;
-        private readonly List<CommandController> _controllers;
+        private readonly List<Type> _controllerTypes;
         private readonly BotData _botData;
 
         private readonly IRoleService<TRole> _roleService;
         private readonly IStateService<TState> _stateService;
 
-        public MessageHandler(IControllersCollection collection, ITelegramBotClient client, BotData botData,
-            IRoleService<TRole> roleService, IStateService<TState> stateService)
+        private readonly IServiceProvider _provider;
+
+        public MessageHandler(ControllersCollection collection, ITelegramBotClient client, BotData botData,
+            IRoleService<TRole> roleService, IStateService<TState> stateService, IServiceProvider provider)
         {
             _client = client;
             _botData = botData;
-            _controllers = collection.Controllers
+            _controllerTypes = collection.ControllerTypes
                 .Where(c =>
                 {
                     BotNameAttribute[] attributes = GetBotNameAttributes(c);
@@ -44,16 +46,18 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
             _roleService = roleService;
             _stateService = stateService;
+
+            _provider = provider;
         }
 
-        private BotNameAttribute[] GetBotNameAttributes(CommandController controller)
+        private BotNameAttribute[] GetBotNameAttributes(Type controllerType)
         {
-            return (BotNameAttribute[])controller.GetType().GetCustomAttributes(typeof(BotNameAttribute), false);
+            return (BotNameAttribute[])controllerType.GetCustomAttributes(typeof(BotNameAttribute), false);
         }
 
-        private RoleAttribute[] GetRoleAttributes(CommandController controller)
+        private RoleAttribute[] GetRoleAttributes(Type controllerType)
         {
-            return (RoleAttribute[])controller.GetType().GetCustomAttributes(typeof(RoleAttribute), false);
+            return (RoleAttribute[])controllerType.GetCustomAttributes(typeof(RoleAttribute), false);
         }
 
         private RoleAttribute[] GetRoleAttributes(MethodInfo method)
@@ -61,9 +65,9 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             return (RoleAttribute[])method.GetCustomAttributes(typeof(RoleAttribute), false);
         }
 
-        private StateAttribute[] GetStateAttributes(CommandController controller)
+        private StateAttribute[] GetStateAttributes(Type controllerType)
         {
-            return (StateAttribute[])controller.GetType().GetCustomAttributes(typeof(StateAttribute), false);
+            return (StateAttribute[])controllerType.GetCustomAttributes(typeof(StateAttribute), false);
         }
 
         private StateAttribute[] GetStateAttributes(MethodInfo method)
@@ -85,7 +89,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         {
             if (userState != null)
             {
-                return _controllers.Where(c =>
+                return _controllerTypes.Where(c =>
                     {
                         RoleAttribute[] roles = GetRoleAttributes(c);
                         StateAttribute[] states = GetStateAttributes(c);
@@ -103,7 +107,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                     })).ToArray();
             }
 
-            return _controllers.SelectMany(c => c.GetType().GetMethods()).ToArray();
+            return _controllerTypes.SelectMany(c => c.GetMethods()).ToArray();
         }
 
         private TelegramMethod GetMethod(MethodType type, Message message)
@@ -173,7 +177,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             if (method != null)
                 return new TelegramMethod
                 {
-                    Controller = _controllers.First(c => c.GetType() == method.DeclaringType),
+                    ControllerType = _controllerTypes.First(c => c == method.DeclaringType),
                     Method = method
                 };
 
@@ -185,11 +189,11 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             MethodInfo method = null;
             string path = JsonConvert.DeserializeObject<CallbackQueryModel>(callback.Data).Path;
 
-            foreach (CommandController controller in _controllers)
+            foreach (Type controllerType in _controllerTypes)
             {
                 if (type == MethodType.Callback)
                 {
-                    method = controller.GetType().GetMethods()
+                    method = controllerType.GetMethods()
                          .FirstOrDefault(m => ((CallbackQueryAttribute[])m.GetCustomAttributes(typeof(CallbackQueryAttribute), false))
                          .Any(a => a.GetPath() == path));
                 }
@@ -197,7 +201,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                 if (method != null)
                     return new TelegramMethod
                     {
-                        Controller = controller,
+                        ControllerType = controllerType,
                         Method = method
                     };
             }
@@ -209,7 +213,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         {
             TelegramMethod method = GetMethod(type, message);
 
-            if (method != null && method.Controller != null && method.Method != null)
+            if (method != null && method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
                 List<object> parameters = new List<object> { };
@@ -222,7 +226,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                         BotData = _botData
                     });
 
-                method.Method.Invoke(method.Controller, parameters.ToArray());
+                method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
+                    parameters.ToArray());
             }
         }
 
@@ -230,7 +235,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         {
             TelegramMethod method = GetMethod(type, callback);
 
-            if (method.Controller != null && method.Method != null)
+            if (method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
                 List<object> parameters = new List<object> { };
@@ -252,7 +257,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                     parameters.Add(JsonConvert.DeserializeObject(
                         callback.Data, methodParams.First(p => p.ParameterType.IsSubclassOf(callbackType)).ParameterType));
 
-                method.Method.Invoke(method.Controller, parameters.ToArray());
+                method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
+                    parameters.ToArray());
             }
         }
 
@@ -284,7 +290,6 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
         public void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
             CallbackQuery callback = e.CallbackQuery;
-            Message message = callback.Message;
 
             if (e.CallbackQuery.Data != null)
                 InvokeCallback(MethodType.Callback, callback);

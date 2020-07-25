@@ -1,7 +1,7 @@
-﻿using Allowed.Telegram.Bot.Handlers.MessageHandler;
+﻿using Allowed.Telegram.Bot.Extensions.Collections;
+using Allowed.Telegram.Bot.Extensions.Collections.Items;
+using Allowed.Telegram.Bot.Handlers.MessageHandler;
 using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Options;
-using Allowed.Telegram.Bot.Services.Extensions.Collections;
 using Allowed.Telegram.Bot.Services.RoleServices;
 using Allowed.Telegram.Bot.Services.StateServices;
 using Allowed.Telegram.Bot.Services.UserServices;
@@ -44,13 +44,13 @@ namespace Allowed.Telegram.Bot.Services.BotServices
         private IMessageHandler GetMessageHandler(IRoleService<TRole> roleService, IStateService<TState> stateService,
             ITelegramBotClient client, BotData botData)
         {
-            return new MessageHandler<TRole, TState>(GetControllersCollection(), client, botData, roleService, stateService);
+            return new MessageHandler<TRole, TState>(GetControllersCollection(),
+                client, botData, roleService, stateService, Services);
         }
 
         protected override async Task DoWork(CancellationToken stoppingToken)
         {
-            IClientsCollection clientsCollection = Services.GetService<IClientsCollection>();
-            ContextOptions options = Services.GetService<ContextOptions>();
+            ClientsCollection clientsCollection = Services.GetService<ClientsCollection>();
 
             foreach (ClientItem client in clientsCollection.Clients)
             {

@@ -17,7 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot.Sample
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E8F5ACC5-7E2A-40C0-933D-896C3085C502}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.LinqToSql.Tests", "Allowed.LinqToSql.Tests\Allowed.LinqToSql.Tests.csproj", "{8F347A4D-5EE4-410D-A1F2-3F0DE5830C82}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.LinqToSql.Tests", "Allowed.LinqToSql.Tests\Allowed.LinqToSql.Tests.csproj", "{8F347A4D-5EE4-410D-A1F2-3F0DE5830C82}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.Telegram.Bot.Tests", "Allowed.Telegram.Bot.Tests\Allowed.Telegram.Bot.Tests.csproj", "{ABC7338A-8E6F-49CB-92C6-C2053D5AB825}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{8F347A4D-5EE4-410D-A1F2-3F0DE5830C82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F347A4D-5EE4-410D-A1F2-3F0DE5830C82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F347A4D-5EE4-410D-A1F2-3F0DE5830C82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABC7338A-8E6F-49CB-92C6-C2053D5AB825}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABC7338A-8E6F-49CB-92C6-C2053D5AB825}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABC7338A-8E6F-49CB-92C6-C2053D5AB825}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABC7338A-8E6F-49CB-92C6-C2053D5AB825}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +61,7 @@ Global
 		{DC79EA85-373A-4AB6-A208-2A224849789F} = {7FB87FF2-C37F-49D9-915B-A34540469640}
 		{360FC415-8F51-4231-9BF5-3CF4551428CD} = {7FB87FF2-C37F-49D9-915B-A34540469640}
 		{8F347A4D-5EE4-410D-A1F2-3F0DE5830C82} = {E8F5ACC5-7E2A-40C0-933D-896C3085C502}
+		{ABC7338A-8E6F-49CB-92C6-C2053D5AB825} = {E8F5ACC5-7E2A-40C0-933D-896C3085C502}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9CD5FD8C-AA30-4BAE-B081-B9DBA7E0FCDA}

@@ -30,15 +30,19 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
 
         public TRole GetRole(int roleId)
         {
-            return _db.Set<TRole>().FromSqlInterpolated(
-                $"SELECT t.Id, t.Name FROM TelegramRoles AS t WHERE t.Id = {roleId} LIMIT 1")
+            return _db.Set<TRole>().FromSqlRaw(
+                "SELECT t.Id, t.Name " +
+                "FROM TelegramRoles AS t " +
+                "WHERE t.Id = {roleId} LIMIT 1")
                 .FirstOrDefault();
         }
 
         public TRole GetRole(string roleName)
         {
-            return _db.Set<TRole>().FromSqlInterpolated(
-                $"SELECT t.Id, t.Name FROM TelegramRoles AS t WHERE t.Name = {roleName} LIMIT 1").FirstOrDefault();
+            return _db.Set<TRole>().FromSqlRaw(
+                 "SELECT t.* " +
+                 "FROM TelegramRoles AS t " +
+                 "WHERE t.Name = {roleName} LIMIT 1").FirstOrDefault();
         }
 
         public void AddRole(string roleName)

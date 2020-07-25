@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Allowed.Telegram.Bot.Models.Store
 {
+    [Table("TelegramUserRoles")]
     public class TelegramUserRole<TKey>
         where TKey : IEquatable<TKey>
     {

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Allowed.Telegram.Bot.Models.Store
 {
+    [Table("TelegramStates")]
     public partial class TelegramState<TKey>
         where TKey : IEquatable<TKey>
     {

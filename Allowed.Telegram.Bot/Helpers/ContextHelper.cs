@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Reflection;
 
 namespace Allowed.Telegram.Bot.Helpers
@@ -99,6 +100,11 @@ namespace Allowed.Telegram.Bot.Helpers
             }
 
             return result;
+        }
+
+        public static DbSet<object> Set(this DbContext db, Type type)
+        {
+            return (DbSet<object>)db.GetType().GetMethod("Set").MakeGenericMethod(type).Invoke(db, null);
         }
     }
 }
