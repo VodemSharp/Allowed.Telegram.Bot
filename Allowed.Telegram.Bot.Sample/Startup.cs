@@ -4,21 +4,32 @@ using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Allowed.Telegram.Bot.Sample
 {
     public class Startup
     {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(AllowedConstants.DbConnection),
                 ServiceLifetime.Transient, ServiceLifetime.Transient);
 
-            services.AddTelegramClients(new BotData[] {
-                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
-                    new BotData { Token = "1289911268:AAE4j2kkt8dPZKKr2MLpGLTP65gvaKA-sDA", Name = "Sample2" },
-                })
+            //services.AddTelegramClients(new BotData[] {
+            //        //new BotData { Token = "<token>", Name = "Sample" },
+            //        //new BotData { Token = "<token2>", Name = "Sample2" },
+            //    })
+            //    .AddTelegramStore<ApplicationDbContext>();
+
+            services.AddTelegramClients(Configuration.GetSection("Telegram:Bots").Get<BotData[]>())
                 .AddTelegramStore<ApplicationDbContext>();
         }
 

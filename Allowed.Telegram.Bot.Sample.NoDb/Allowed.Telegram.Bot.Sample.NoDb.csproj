@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Platforms>AnyCPU;x64;x86</Platforms>
+    <UserSecretsId>2aab8078-2628-4ef3-86af-1d77e26de1c8</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

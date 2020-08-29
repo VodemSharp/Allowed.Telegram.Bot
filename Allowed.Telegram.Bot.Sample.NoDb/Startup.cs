@@ -1,18 +1,27 @@
 using Allowed.Telegram.Bot.Extensions;
 using Allowed.Telegram.Bot.Models;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Allowed.Telegram.Bot.Sample.NoDb
 {
     public class Startup
     {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
         public void ConfigureServices(IServiceCollection services)
         {
-            services
-                .AddTelegramClients(new BotData[] {
-                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
-                });
+            //services.AddTelegramClients(new BotData[] {
+            //        //new BotData { Token = "<token>", Name = "Sample" },
+            //    })
+
+            services.AddTelegramClients(Configuration.GetSection("Telegram:Bots").Get<BotData[]>());
         }
 
         public void Configure(IApplicationBuilder app)
