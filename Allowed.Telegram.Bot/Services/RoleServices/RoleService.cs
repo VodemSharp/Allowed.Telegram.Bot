@@ -56,10 +56,10 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
         {
             return await _db.Set<TRole>().FromSqlRaw(
                 "SELECT t1.* "
-              + "FROM (((TelegramRoles as t1 "
-              + "INNER JOIN TelegramBotUserRoles as t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers as t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers as t4 ON t4.Id = t3.TelegramUserId) "
+              + "FROM (((TelegramRoles AS t1 "
+              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
+              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
+              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
               + $"WHERE t4.ChatId = {chatId} AND t3.TelegramBotId = {_botId} AND t1.Name = '{role}' "
               + "LIMIT 1").AnyAsync();
         }
@@ -75,8 +75,8 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
             {
                 command.CommandText =
                     "SELECT t2.Id "
-                  + "FROM TelegramUsers as t1 "
-                  + "INNER JOIN TelegramBotUsers as t2 ON t1.Id = t2.TelegramUserId "
+                  + "FROM TelegramUsers AS t1 "
+                  + "INNER JOIN TelegramBotUsers AS t2 ON t1.Id = t2.TelegramUserId "
                   + $"WHERE t1.ChatId = {chatId} AND t2.TelegramBotId = {_botId} "
                   + "LIMIT 1";
 
@@ -105,10 +105,10 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
             {
                 command.CommandText =
                         "DELETE t1 " +
-                        "FROM (((TelegramBotUserRoles as t1 " +
-                        "INNER JOIN TelegramRoles as t2 ON t1.TelegramRoleId = t2.Id) " +
-                        "INNER JOIN TelegramBotUsers as t3 ON t1.TelegramBotUserId = t3.Id) " +
-                        "INNER JOIN TelegramUsers as t4 ON t3.TelegramUserId = t4.Id) " +
+                        "FROM (((TelegramBotUserRoles AS t1 " +
+                        "INNER JOIN TelegramRoles AS t2 ON t1.TelegramRoleId = t2.Id) " +
+                        "INNER JOIN TelegramBotUsers AS t3 ON t1.TelegramBotUserId = t3.Id) " +
+                        "INNER JOIN TelegramUsers AS t4 ON t3.TelegramUserId = t4.Id) " +
                         $"WHERE t2.Name = '{role}' AND t3.TelegramBotId = {_botId} AND t4.ChatId = {chatId}";
 
                 await command.ExecuteNonQueryAsync();
@@ -121,10 +121,10 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
         {
             return await _db.Set<TRole>().FromSqlRaw(
                 "SELECT t1.* "
-              + "FROM (((TelegramRoles as t1 "
-              + "INNER JOIN TelegramBotUserRoles as t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers as t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers as t4 ON t4.Id = t3.TelegramUserId) "
+              + "FROM (((TelegramRoles AS t1 "
+              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
+              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
+              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
               + $"WHERE t4.ChatId = {chatId} AND t3.TelegramBotId = {_botId}").ToListAsync();
         }
 
@@ -132,10 +132,10 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
         {
             return await _db.Set<TRole>().FromSqlRaw(
                 "SELECT t1.* "
-              + "FROM (((TelegramRoles as t1 "
-              + "INNER JOIN TelegramBotUserRoles as t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers as t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers as t4 ON t4.Id = t3.TelegramUserId) "
+              + "FROM (((TelegramRoles AS t1 "
+              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
+              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
+              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
               + $"WHERE t4.Username = '{username}' AND t3.TelegramBotId = {_botId}").ToListAsync();
         }
     }

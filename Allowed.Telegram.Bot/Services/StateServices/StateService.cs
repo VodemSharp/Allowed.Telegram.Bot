@@ -25,9 +25,9 @@ namespace Allowed.Telegram.Bot.Services.StateServices
         {
             return await _db.Set<TState>().FromSqlRaw(
                 "SELECT t1.* "
-              + "FROM ((TelegramStates as t1 "
-              + "INNER JOIN TelegramBotUsers as t2 ON t2.Id = t1.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers as t3 ON t3.Id = t2.TelegramUserId) "
+              + "FROM ((TelegramStates AS t1 "
+              + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
+              + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
               + $"WHERE t3.Username = '{username}' AND t2.TelegramBotId = {_botId} "
               + "LIMIT 1").FirstOrDefaultAsync();
         }
@@ -36,9 +36,9 @@ namespace Allowed.Telegram.Bot.Services.StateServices
         {
             return await _db.Set<TState>().FromSqlRaw(
                 "SELECT t1.* "
-              + "FROM ((TelegramStates as t1 "
-              + "INNER JOIN TelegramBotUsers as t2 ON t2.Id = t1.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers as t3 ON t3.Id = t2.TelegramUserId) "
+              + "FROM ((TelegramStates AS t1 "
+              + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
+              + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
               + $"WHERE t3.ChatId = {chatId} AND t2.TelegramBotId = {_botId} "
               + "LIMIT 1").FirstOrDefaultAsync();
         }
@@ -54,8 +54,8 @@ namespace Allowed.Telegram.Bot.Services.StateServices
             {
                 command.CommandText =
                     "SELECT t2.Id "
-                  + "FROM TelegramUsers as t1 "
-                  + "INNER JOIN TelegramBotUsers as t2 ON t1.Id = t2.TelegramUserId "
+                  + "FROM TelegramUsers AS t1 "
+                  + "INNER JOIN TelegramBotUsers AS t2 ON t1.Id = t2.TelegramUserId "
                   + $"WHERE t1.ChatId = {chatId} AND t2.TelegramBotId = {_botId} "
                   + "LIMIT 1";
 
@@ -77,8 +77,8 @@ namespace Allowed.Telegram.Bot.Services.StateServices
             {
                 command.CommandText =
                     "SELECT t2.Id "
-                  + "FROM TelegramUsers as t1 "
-                  + "INNER JOIN TelegramBotUsers as t2 ON t1.Id = t2.TelegramUserId "
+                  + "FROM TelegramUsers AS t1 "
+                  + "INNER JOIN TelegramBotUsers AS t2 ON t1.Id = t2.TelegramUserId "
                   + $"WHERE t1.Username = '{username}' AND t2.TelegramBotId = {_botId} "
                   + "LIMIT 1";
 

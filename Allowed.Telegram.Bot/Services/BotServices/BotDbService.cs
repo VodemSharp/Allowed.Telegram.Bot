@@ -116,7 +116,7 @@ namespace Allowed.Telegram.Bot.Services.BotServices
                         GetMessageHandler(roleService, stateService, client.Client, client.BotData);
 
                     await userService.CheckUser(b.CallbackQuery.Message.Chat.Id, b.CallbackQuery.Message.Chat.Username);
-                    await messageHandler.OnCallbackQuery(a, b);
+                    await messageHandler.OnCallbackQuery(b, botId);
                 };
 
                 client.Client.StartReceiving();

@@ -2,6 +2,7 @@
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Helpers;
 using Allowed.Telegram.Bot.Models;
+using Allowed.Telegram.Bot.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
@@ -32,21 +33,11 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             _controllerTypes = collection.ControllerTypes
                 .Where(c =>
                 {
-                    BotNameAttribute[] attributes = GetBotNameAttributes(c);
+                    BotNameAttribute[] attributes = c.GetBotNameAttributes();
                     return attributes.Length == 0 || attributes.Any(a => a.GetName() == botData.Name);
                 }).ToList();
 
             _provider = provider;
-        }
-
-        protected BotNameAttribute[] GetBotNameAttributes(Type controllerType)
-        {
-            return (BotNameAttribute[])controllerType.GetCustomAttributes(typeof(BotNameAttribute), false);
-        }
-
-        protected enum MethodType
-        {
-            ByPath, BySmile, ByType, Text, Callback
         }
 
         protected virtual Task<MethodInfo[]> GetAllowedMethods(long chatId)
@@ -61,88 +52,90 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             MethodInfo method = null;
             MethodInfo[] allowedMethods = await GetAllowedMethods(message.Chat.Id);
 
-            if (type == MethodType.ByPath)
+            switch (type)
             {
-                method = allowedMethods
-                            .FirstOrDefault(m => ((CommandAttribute[])m.GetCustomAttributes(typeof(CommandAttribute), false))
-                            .Any(a => $"/{a.GetPath()}" == message.Text));
+                case MethodType.ByPath:
 
-                if (method == null)
                     method = allowedMethods
-                            .FirstOrDefault(m => ((DefaultCommandAttribute[])m.GetCustomAttributes(typeof(DefaultCommandAttribute), false))
-                            .Any());
-            }
-            else if (type == MethodType.BySmile)
-            {
-                method = allowedMethods
-                            .FirstOrDefault(m => ((EmojiCommandAttribute[])m.GetCustomAttributes(typeof(EmojiCommandAttribute), false))
-                            .Any(a => message.Text.StartsWith(a.GetSmile())));
-
-                if (method == null)
-                    method = allowedMethods
-                            .FirstOrDefault(m => ((EmojiDefaultCommandAttribute[])m.GetCustomAttributes(typeof(EmojiDefaultCommandAttribute), false))
-                            .Any());
-            }
-            else if (type == MethodType.Text)
-            {
-                List<MethodInfo> methods = allowedMethods
-                            .Where(m => ((TextCommandAttribute[])m.GetCustomAttributes(typeof(TextCommandAttribute), false))
-                            .Any()).ToList();
-
-                if (methods.Count != 0)
-                {
-                    string userState = await GetStateValue(message.Chat.Id);
-
-                    if (!string.IsNullOrEmpty(userState))
-                        method = methods.FirstOrDefault(m => ((StateAttribute[])m.GetCustomAttributes(typeof(StateAttribute))).Any(s => s.GetState() == userState));
+                        .FirstOrDefault(m => m.GetCommandAttributes().Any(a => $"/{a.GetPath()}" == message.Text));
 
                     if (method == null)
-                        method = methods.FirstOrDefault(m => !m.GetCustomAttributes(typeof(StateAttribute)).Any());
-                }
-            }
-            else if (type == MethodType.ByType)
-            {
-                method = allowedMethods
-                     .FirstOrDefault(m => ((TypedCommandAttribute[])m.GetCustomAttributes(typeof(TypedCommandAttribute), false))
-                     .Any(a => a.GetMessageType() == message.Type));
+                        method = allowedMethods.FirstOrDefault(m => m.GetDefaultCommandAttributes().Any());
+
+                    break;
+
+                case MethodType.BySmile:
+
+                    method = allowedMethods
+                                .FirstOrDefault(m => m.GetEmojiCommandAttributes().Any(a => message.Text.StartsWith(a.GetSmile())));
+
+                    if (method == null)
+                        method = allowedMethods.FirstOrDefault(m => m.GetEmojiDefaultCommandAttributes().Any());
+
+                    break;
+
+                case MethodType.Text:
+
+                    List<MethodInfo> methods = allowedMethods.Where(m => m.GetTextCommandAttributes().Any()).ToList();
+
+                    if (methods.Count != 0)
+                    {
+                        string userState = await GetStateValue(message.Chat.Id);
+
+                        if (!string.IsNullOrEmpty(userState))
+                            method = methods.FirstOrDefault(m => m.GetStateAttributes().Any(s => s.GetState() == userState));
+
+                        if (method == null)
+                            method = methods.FirstOrDefault(m => !m.GetStateAttributes().Any());
+                    }
+
+                    break;
+
+                case MethodType.ByType:
+
+                    method = allowedMethods
+                         .FirstOrDefault(m => m.GetTypedCommandAttributes().Any(a => a.GetMessageType() == message.Type));
+
+                    break;
             }
 
             if (method != null)
+            {
                 return new TelegramMethod
                 {
                     ControllerType = _controllerTypes.First(c => c == method.DeclaringType),
                     Method = method
                 };
-
-            return null;
-        }
-
-        private TelegramMethod GetMethod(MethodType type, CallbackQuery callback)
-        {
-            MethodInfo method = null;
-            string path = JsonConvert.DeserializeObject<CallbackQueryModel>(callback.Data).Path;
-
-            foreach (Type controllerType in _controllerTypes)
-            {
-                if (type == MethodType.Callback)
-                {
-                    method = controllerType.GetMethods()
-                         .FirstOrDefault(m => ((CallbackQueryAttribute[])m.GetCustomAttributes(typeof(CallbackQueryAttribute), false))
-                         .Any(a => a.GetPath() == path));
-                }
-
-                if (method != null)
-                    return new TelegramMethod
-                    {
-                        ControllerType = controllerType,
-                        Method = method
-                    };
             }
 
             return null;
         }
 
-        private async Task<object> InvokeMethod(MethodType type, Message message, object botId = null)
+        protected async Task<TelegramMethod> GetMethod(MethodType type, CallbackQuery callback)
+        {
+            MethodInfo method = null;
+            MethodInfo[] allowedMethods = await GetAllowedMethods(callback.Message.Chat.Id);
+
+            string path = JsonConvert.DeserializeObject<CallbackQueryModel>(callback.Data).Path;
+
+            if (type == MethodType.Callback)
+            {
+                method = allowedMethods.FirstOrDefault(m => m.GetCallbackQueryAttributes().Any(a => a.GetPath() == path));
+            }
+
+            if (method != null)
+            {
+                return new TelegramMethod
+                {
+                    ControllerType = _controllerTypes.First(c => c == method.DeclaringType),
+                    Method = method
+                };
+            }
+
+            return null;
+        }
+
+        private async Task<object> InvokeMethod(MethodType type, Message message)
         {
             TelegramMethod method = await GetMethod(type, message);
 
@@ -168,9 +161,9 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             return null;
         }
 
-        private object InvokeCallback(MethodType type, CallbackQuery callback)
+        private async Task<object> InvokeCallback(MethodType type, CallbackQuery callback)
         {
-            TelegramMethod method = GetMethod(type, callback);
+            TelegramMethod method = await GetMethod(type, callback);
 
             if (method.ControllerType != null && method.Method != null)
             {
@@ -178,12 +171,14 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 List<object> parameters = new List<object> { };
 
                 if (methodParams.Any(p => p.ParameterType == typeof(CallbackQueryData)))
+                {
                     parameters.Add(new CallbackQueryData
                     {
                         Client = _client,
                         CallbackQuery = callback,
                         BotData = _botData
                     });
+                }
 
                 Type callbackType = typeof(CallbackQueryModel);
 
@@ -201,11 +196,6 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             return null;
         }
 
-        private bool IsFirstSmile(string text)
-        {
-            return EmojiHelper.IsStartEmoji(text);
-        }
-
         protected MethodType GetMethodType(Message message)
         {
             switch (message.Type)
@@ -213,7 +203,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 case MessageType.Text:
                     if (message.Text.StartsWith("/"))
                         return MethodType.ByPath;
-                    else if (IsFirstSmile(message.Text))
+                    else if (EmojiHelper.IsStartEmoji(message.Text))
                         return MethodType.BySmile;
                     else
                         return MethodType.Text;
@@ -229,12 +219,12 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             return await InvokeMethod(GetMethodType(message), message);
         }
 
-        public async Task<object> OnCallbackQuery(object sender, CallbackQueryEventArgs e)
+        public async Task<object> OnCallbackQuery(CallbackQueryEventArgs e)
         {
             CallbackQuery callback = e.CallbackQuery;
 
             if (e.CallbackQuery.Data != null)
-                return InvokeCallback(MethodType.Callback, callback);
+                return await InvokeCallback(MethodType.Callback, callback);
 
             return null;
         }
