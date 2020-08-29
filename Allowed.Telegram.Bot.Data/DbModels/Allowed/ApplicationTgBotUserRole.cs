@@ -2,7 +2,7 @@
 
 namespace Allowed.Telegram.Bot.Data.DbModels.Allowed
 {
-    public class ApplicationTgUserRole : TelegramUserRole<int>
+    public class ApplicationTgBotUserRole : TelegramBotUserRole<int>
     {
     }
 }

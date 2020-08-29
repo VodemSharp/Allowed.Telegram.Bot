@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
-    public class RolesMethodController : CommandController
+    [BotName("Sample")]
+    public class RolesMethodController : CommandController<int>
     {
         [Role("admin")]
         [Command("admin_role_method")]

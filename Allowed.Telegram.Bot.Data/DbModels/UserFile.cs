@@ -1,17 +1,13 @@
-﻿using Allowed.Telegram.Bot.Models.Store;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using Allowed.Telegram.Bot.Data.DbModels.Allowed;
 
 namespace Allowed.Telegram.Bot.Data.DbModels
 {
     public class UserFile
     {
-        [Key]
         public int Id { get; set; }
 
-        [ForeignKey("TelegramUser")]
         public int TelegramUserId { get; set; }
-        public TelegramUser<int> TelegramUser { get; set; }
+        public ApplicationTgUser TelegramUser { get; set; }
 
         public string Type { get; set; }
         public string Value { get; set; }

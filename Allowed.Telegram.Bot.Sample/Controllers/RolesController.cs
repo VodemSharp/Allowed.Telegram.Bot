@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
     [Role("admin")]
-    public class RolesController : CommandController
+    [BotName("Sample")]
+    public class RolesController : CommandController<int>
     {
         [Command("admin_role_controller")]
         public async Task RoleControllerMethod(MessageData data)

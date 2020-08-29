@@ -1,27 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using Allowed.Telegram.Bot.Models.Store;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Services.RoleServices
 {
-    public interface IRoleService<TRole>
-        where TRole : class
+    public interface IRoleService<TKey, TRole>
+        where TKey : IEquatable<TKey>
+        where TRole : TelegramRole<TKey>
     {
-        #region Roles
+        Task<bool> AnyRole(string role);
+        Task<TRole> GetRole(string role);
+        Task AddRole(TRole role);
+        Task UpdateRole(TRole role);
+        Task RemoveRole(TRole role);
 
-        List<TRole> GetRoles(long chatId);
-        TRole GetRole(int roleId);
-        TRole GetRole(string role);
+        Task<bool> AnyUserRole(long chatId, string role);
+        Task AddUserRole(long chatId, string role);
+        Task RemoveUserRole(long chatId, string role);
 
-        void AddRole(string role);
-
-        void UpdateRole(string oldRoleName, string newRoleName);
-        void UpdateRole(int roleId, string roleName);
-
-        void RemoveRole(string role);
-        void RemoveRole(int roleId);
-
-        bool AnyRole(int roleId);
-        bool AnyRole(string role);
-
-        #endregion
+        Task<List<TRole>> GetUserRoles(long chatId);
+        Task<List<TRole>> GetUserRoles(string username);
     }
 }

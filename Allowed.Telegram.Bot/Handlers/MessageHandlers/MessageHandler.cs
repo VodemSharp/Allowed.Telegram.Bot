@@ -1,39 +1,31 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
-using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Helpers;
 using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Services.RoleServices;
-using Allowed.Telegram.Bot.Services.StateServices;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace Allowed.Telegram.Bot.Handlers.MessageHandler
+namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 {
-    public class MessageHandler<TRole, TState> : IMessageHandler
-
-        where TRole : class
-        where TState : class
+    public class MessageHandler
     {
-        private readonly ITelegramBotClient _client;
-        private readonly List<Type> _controllerTypes;
-        private readonly BotData _botData;
+        protected readonly List<Type> _controllerTypes;
+        protected readonly ITelegramBotClient _client;
+        protected readonly BotData _botData;
 
-        private readonly IRoleService<TRole> _roleService;
-        private readonly IStateService<TState> _stateService;
+        protected readonly IServiceProvider _provider;
 
-        private readonly IServiceProvider _provider;
-
-        public MessageHandler(ControllersCollection collection, ITelegramBotClient client, BotData botData,
-            IRoleService<TRole> roleService, IStateService<TState> stateService, IServiceProvider provider)
+        public MessageHandler(ControllersCollection collection, ITelegramBotClient client,
+            BotData botData, IServiceProvider provider)
         {
             _client = client;
             _botData = botData;
@@ -44,92 +36,30 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                     return attributes.Length == 0 || attributes.Any(a => a.GetName() == botData.Name);
                 }).ToList();
 
-            _roleService = roleService;
-            _stateService = stateService;
-
             _provider = provider;
         }
 
-        private BotNameAttribute[] GetBotNameAttributes(Type controllerType)
+        protected BotNameAttribute[] GetBotNameAttributes(Type controllerType)
         {
             return (BotNameAttribute[])controllerType.GetCustomAttributes(typeof(BotNameAttribute), false);
         }
 
-        private RoleAttribute[] GetRoleAttributes(Type controllerType)
-        {
-            return (RoleAttribute[])controllerType.GetCustomAttributes(typeof(RoleAttribute), false);
-        }
-
-        private RoleAttribute[] GetRoleAttributes(MethodInfo method)
-        {
-            return (RoleAttribute[])method.GetCustomAttributes(typeof(RoleAttribute), false);
-        }
-
-        private StateAttribute[] GetStateAttributes(Type controllerType)
-        {
-            return (StateAttribute[])controllerType.GetCustomAttributes(typeof(StateAttribute), false);
-        }
-
-        private StateAttribute[] GetStateAttributes(MethodInfo method)
-        {
-            return (StateAttribute[])method.GetCustomAttributes(typeof(StateAttribute), false);
-        }
-
-        private enum MethodType
+        protected enum MethodType
         {
             ByPath, BySmile, ByType, Text, Callback
         }
 
-        private string GetStateValue(TState userState)
+        protected virtual Task<MethodInfo[]> GetAllowedMethods(long chatId)
         {
-            return userState == null ? null : (string)ReflectionHelper.GetProperty(userState, "Value");
+            return Task.FromResult(_controllerTypes.SelectMany(c => c.GetMethods()).ToArray());
         }
 
-        private MethodInfo[] GetAllowedMethods(List<TRole> userRoles = null, TState userState = null)
-        {
-            if (userState != null)
-            {
-                return _controllerTypes.Where(c =>
-                    {
-                        RoleAttribute[] roles = GetRoleAttributes(c);
-                        StateAttribute[] states = GetStateAttributes(c);
+        protected virtual Task<string> GetStateValue(long chatId = 0) => Task.FromResult(string.Empty);
 
-                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ReflectionHelper.GetProperty(ur, "Name"))))
-                        && (states.Length == 0 || states.Any(s => s.GetState() == GetStateValue(userState)));
-                    })
-                    .SelectMany(c => c.GetType().GetMethods().Where(m =>
-                    {
-                        RoleAttribute[] roles = GetRoleAttributes(m);
-                        StateAttribute[] states = GetStateAttributes(m);
-
-                        return (roles.Length == 0 || userRoles.Any(ur => roles.Select(r => r.GetRole()).Contains(ReflectionHelper.GetProperty(ur, "Name"))))
-                        && (states.Length == 0 || states.Any(s => s.GetState() == GetStateValue(userState)));
-                    })).ToArray();
-            }
-
-            return _controllerTypes.SelectMany(c => c.GetMethods()).ToArray();
-        }
-
-        private TelegramMethod GetMethod(MethodType type, Message message)
+        protected async Task<TelegramMethod> GetMethod(MethodType type, Message message)
         {
             MethodInfo method = null;
-            MethodInfo[] allowedMethods;
-
-            List<TRole> userRoles = null;
-            TState userState = null;
-
-
-            if (_roleService != null && _stateService != null)
-            {
-                userRoles = _roleService.GetRoles(message.Chat.Id).ToList();
-                userState = _stateService.GetState(message.Chat.Id);
-            }
-            else
-            {
-                userRoles = new List<TRole> { };
-            }
-
-            allowedMethods = GetAllowedMethods(userRoles, userState);
+            MethodInfo[] allowedMethods = await GetAllowedMethods(message.Chat.Id);
 
             if (type == MethodType.ByPath)
             {
@@ -161,7 +91,10 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
 
                 if (methods.Count != 0)
                 {
-                    method = methods.FirstOrDefault(m => ((StateAttribute[])m.GetCustomAttributes(typeof(StateAttribute))).Any(s => s.GetState() == GetStateValue(userState)));
+                    string userState = await GetStateValue(message.Chat.Id);
+
+                    if (!string.IsNullOrEmpty(userState))
+                        method = methods.FirstOrDefault(m => ((StateAttribute[])m.GetCustomAttributes(typeof(StateAttribute))).Any(s => s.GetState() == userState));
 
                     if (method == null)
                         method = methods.FirstOrDefault(m => !m.GetCustomAttributes(typeof(StateAttribute)).Any());
@@ -209,9 +142,9 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             return null;
         }
 
-        private void InvokeMethod(MethodType type, Message message)
+        private async Task<object> InvokeMethod(MethodType type, Message message, object botId = null)
         {
-            TelegramMethod method = GetMethod(type, message);
+            TelegramMethod method = await GetMethod(type, message);
 
             if (method != null && method.ControllerType != null && method.Method != null)
             {
@@ -219,19 +152,23 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                 List<object> parameters = new List<object> { };
 
                 if (methodParams.Any(p => p.ParameterType == typeof(MessageData)))
+                {
                     parameters.Add(new MessageData
                     {
                         Message = message,
                         Client = _client,
                         BotData = _botData
                     });
+                }
 
-                method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
+                return method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
                     parameters.ToArray());
             }
+
+            return null;
         }
 
-        private void InvokeCallback(MethodType type, CallbackQuery callback)
+        private object InvokeCallback(MethodType type, CallbackQuery callback)
         {
             TelegramMethod method = GetMethod(type, callback);
 
@@ -257,9 +194,11 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
                     parameters.Add(JsonConvert.DeserializeObject(
                         callback.Data, methodParams.First(p => p.ParameterType.IsSubclassOf(callbackType)).ParameterType));
 
-                method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
+                return method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
                     parameters.ToArray());
             }
+
+            return null;
         }
 
         private bool IsFirstSmile(string text)
@@ -267,32 +206,37 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandler
             return EmojiHelper.IsStartEmoji(text);
         }
 
-        public void OnMessage(object sender, MessageEventArgs e)
+        protected MethodType GetMethodType(Message message)
         {
-            Message message = e.Message;
-
             switch (message.Type)
             {
                 case MessageType.Text:
                     if (message.Text.StartsWith("/"))
-                        InvokeMethod(MethodType.ByPath, message);
+                        return MethodType.ByPath;
                     else if (IsFirstSmile(message.Text))
-                        InvokeMethod(MethodType.BySmile, message);
+                        return MethodType.BySmile;
                     else
-                        InvokeMethod(MethodType.Text, message);
-                    break;
+                        return MethodType.Text;
                 default:
-                    InvokeMethod(MethodType.ByType, message);
-                    break;
+                    return MethodType.ByType;
             }
         }
 
-        public void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
+        public async Task<object> OnMessage(MessageEventArgs e)
+        {
+            Message message = e.Message;
+
+            return await InvokeMethod(GetMethodType(message), message);
+        }
+
+        public async Task<object> OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
             CallbackQuery callback = e.CallbackQuery;
 
             if (e.CallbackQuery.Data != null)
-                InvokeCallback(MethodType.Callback, callback);
+                return InvokeCallback(MethodType.Callback, callback);
+
+            return null;
         }
     }
 }

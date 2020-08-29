@@ -1,9 +1,16 @@
-﻿namespace Allowed.Telegram.Bot.Services.StateServices
+﻿using Allowed.Telegram.Bot.Models.Store;
+using System;
+using System.Threading.Tasks;
+
+namespace Allowed.Telegram.Bot.Services.StateServices
 {
-    public interface IStateService<TState>
-        where TState : class
+    public interface IStateService<TKey, TState>
+        where TKey : IEquatable<TKey>
+        where TState : TelegramState<TKey>
     {
-        TState GetState(long chatId, string botName = "");
-        void SetState(long chatId, string value, string botName = "");
+        Task<TState> GetState(string username);
+        Task<TState> GetState(long chatId);
+        Task SetState(string username, string value);
+        Task SetState(long chatId, string value);
     }
 }

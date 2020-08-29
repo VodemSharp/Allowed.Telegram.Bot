@@ -6,7 +6,8 @@ using Telegram.Bot.Types.Enums;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
-    public class TypedController : CommandController
+    [BotName("Sample")]
+    public class TypedController : CommandController<int>
     {
         [TypedCommand(MessageType.Photo)]
         public async Task Photo(MessageData data)

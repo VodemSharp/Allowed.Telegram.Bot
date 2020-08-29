@@ -1,35 +1,60 @@
-﻿using Allowed.Telegram.Bot.Options;
-using Allowed.Telegram.Bot.Services.RoleServices;
-using Allowed.Telegram.Bot.Services.StateServices;
-using Allowed.Telegram.Bot.Services.UserServices;
+﻿using Allowed.Telegram.Bot.Factories.ServiceFactories;
+using Allowed.Telegram.Bot.Models.Store;
+using Allowed.Telegram.Bot.Options;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Allowed.Telegram.Bot.Extensions
 {
     public static class StoreExtensions
     {
+        private static Func<Type, bool> GetSetTypeCheck(Type checkedType)
+        {
+            return t =>
+            {
+                Type baseType = t.BaseType;
+
+                return baseType != null && baseType.IsGenericType
+                    && baseType.GetGenericTypeDefinition() == checkedType;
+            };
+        }
+
         public static IServiceCollection AddTelegramStore<TContext>(this IServiceCollection services)
             where TContext : class
         {
             Type contextType = typeof(TContext);
 
+            Type dbSet = typeof(DbSet<>);
+            List<Type> setTypes = contextType.GetProperties()
+                .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == dbSet)
+                .Select(p => p.PropertyType.GenericTypeArguments[0]).ToList();
+
+            Type userType = typeof(TelegramUser<>);
+            Type roleType = typeof(TelegramRole<>);
+            Type botType = typeof(TelegramBot<>);
+            Type botUserType = typeof(TelegramBotUser<>);
+            Type botUserRoleType = typeof(TelegramBotUserRole<>);
+            Type stateType = typeof(TelegramState<>);
+
             ContextOptions options = new ContextOptions
             {
                 ContextType = contextType,
 
-                UserType = contextType.GetProperty("TelegramUsers").PropertyType.GenericTypeArguments[0],
-                RoleType = contextType.GetProperty("TelegramUsers").PropertyType.GenericTypeArguments[0],
-                UserRoleType = contextType.GetProperty("TelegramUserRoles").PropertyType.GenericTypeArguments[0],
-                StateType = contextType.GetProperty("TelegramStates").PropertyType.GenericTypeArguments[0],
-                BotType = contextType.GetProperty("TelegramBots").PropertyType.GenericTypeArguments[0]
+                UserType = setTypes.FirstOrDefault(GetSetTypeCheck(userType)),
+                RoleType = setTypes.FirstOrDefault(GetSetTypeCheck(roleType)),
+                BotType = setTypes.FirstOrDefault(GetSetTypeCheck(botType)),
+                BotUserType = setTypes.FirstOrDefault(GetSetTypeCheck(botUserType)),
+                BotUserRoleType = setTypes.FirstOrDefault(GetSetTypeCheck(botUserRoleType)),
+                StateType = setTypes.FirstOrDefault(GetSetTypeCheck(stateType)),
             };
 
-            services.AddSingleton(options);
+            options.KeyType = options.UserType.BaseType.GenericTypeArguments[0];
 
-            services.AddTransient(typeof(IRoleService<>), typeof(RoleService<>));
-            services.AddTransient(typeof(IUserService<>), typeof(UserService<>));
-            services.AddTransient(typeof(IStateService<>), typeof(StateService<>));
+            services.AddSingleton(options);
+            services.AddTransient<IServiceFactory, ServiceFactory>();
 
             return services;
         }

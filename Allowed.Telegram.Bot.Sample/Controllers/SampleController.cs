@@ -1,24 +1,21 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Data.DbModels.Allowed;
+using Allowed.Telegram.Bot.Factories.ServiceFactories;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Services.RoleServices;
-using Allowed.Telegram.Bot.Services.UserServices;
 using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
-    public class SampleController : CommandController
+    [BotName("Sample")]
+    public class SampleController : CommandController<int>
     {
-        private readonly IUserService<ApplicationTgUser> _userService;
-        private readonly IRoleService<ApplicationTgRole> _roleService;
+        private IRoleService<int, ApplicationTgRole> _roleService;
 
-        public SampleController(
-            IUserService<ApplicationTgUser> userService,
-            IRoleService<ApplicationTgRole> roleService)
+        public override void Initialize(IServiceFactory factory)
         {
-            _userService = userService;
-            _roleService = roleService;
+            _roleService = factory.CreateRoleService<int, ApplicationTgRole>(BotId);
         }
 
         [Command("start")]
@@ -30,20 +27,27 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         [Command("add_admin_role")]
         public async Task AddAdminRole(MessageData data)
         {
-            if (!_roleService.AnyRole("admin"))
-                _roleService.AddRole("admin");
+            if (!await _roleService.AnyRole("admin"))
+            {
+                await _roleService.AddRole(new ApplicationTgRole { Name = "admin" });
+            }
 
-            if (!_userService.AnyUserRole(data.Message.Chat.Id, "admin"))
-                _userService.AddUserRole(data.Message.Chat.Id, "admin");
-
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You add admin role!");
+            if (await _roleService.AnyUserRole(data.Message.Chat.Id, "admin"))
+            {
+                await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You already have admin role!");
+            }
+            else
+            {
+                await _roleService.AddUserRole(data.Message.Chat.Id, "admin");
+                await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You add admin role!");
+            }
         }
 
         [Command("remove_admin_role")]
         public async Task RemoveAdminRole(MessageData data)
         {
-            if (_userService.AnyUserRole(data.Message.Chat.Id, "admin"))
-                _userService.RemoveUserRole(data.Message.Chat.Id, "admin");
+            if (await _roleService.AnyUserRole(data.Message.Chat.Id, "admin"))
+                await _roleService.RemoveUserRole(data.Message.Chat.Id, "admin");
 
             await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You remove admin role!");
         }

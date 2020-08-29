@@ -48,52 +48,25 @@ namespace Allowed.Telegram.Bot.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TelegramStates",
+                name: "TelegramBotUsers",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     TelegramUserId = table.Column<int>(nullable: false),
-                    TelegramBotId = table.Column<int>(nullable: false),
-                    Value = table.Column<string>(nullable: true)
+                    TelegramBotId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TelegramStates", x => x.Id);
+                    table.PrimaryKey("PK_TelegramBotUsers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TelegramStates_TelegramBots_TelegramBotId",
+                        name: "FK_TelegramBotUsers_TelegramBots_TelegramBotId",
                         column: x => x.TelegramBotId,
                         principalTable: "TelegramBots",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_TelegramStates_TelegramUsers_TelegramUserId",
-                        column: x => x.TelegramUserId,
-                        principalTable: "TelegramUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TelegramUserRoles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    TelegramUserId = table.Column<int>(nullable: false),
-                    TelegramRoleId = table.Column<int>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TelegramUserRoles", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TelegramUserRoles_TelegramRoles_TelegramRoleId",
-                        column: x => x.TelegramRoleId,
-                        principalTable: "TelegramRoles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TelegramUserRoles_TelegramUsers_TelegramUserId",
+                        name: "FK_TelegramBotUsers_TelegramUsers_TelegramUserId",
                         column: x => x.TelegramUserId,
                         principalTable: "TelegramUsers",
                         principalColumn: "Id",
@@ -121,30 +94,81 @@ namespace Allowed.Telegram.Bot.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_TelegramStates_TelegramBotId",
-                table: "TelegramStates",
-                column: "TelegramBotId");
+            migrationBuilder.CreateTable(
+                name: "TelegramBotUserRoles",
+                columns: table => new
+                {
+                    TelegramBotUserId = table.Column<int>(nullable: false),
+                    TelegramRoleId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TelegramBotUserRoles", x => new { x.TelegramBotUserId, x.TelegramRoleId });
+                    table.ForeignKey(
+                        name: "FK_TelegramBotUserRoles_TelegramBotUsers_TelegramBotUserId",
+                        column: x => x.TelegramBotUserId,
+                        principalTable: "TelegramBotUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TelegramBotUserRoles_TelegramRoles_TelegramRoleId",
+                        column: x => x.TelegramRoleId,
+                        principalTable: "TelegramRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TelegramStates",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    TelegramBotUserId = table.Column<int>(nullable: false),
+                    Value = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TelegramStates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TelegramStates_TelegramBotUsers_TelegramBotUserId",
+                        column: x => x.TelegramBotUserId,
+                        principalTable: "TelegramBotUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
             migrationBuilder.CreateIndex(
-                name: "IX_TelegramStates_TelegramUserId",
-                table: "TelegramStates",
-                column: "TelegramUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TelegramUserRoles_TelegramRoleId",
-                table: "TelegramUserRoles",
+                name: "IX_TelegramBotUserRoles_TelegramRoleId",
+                table: "TelegramBotUserRoles",
                 column: "TelegramRoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TelegramUserRoles_TelegramUserId",
-                table: "TelegramUserRoles",
+                name: "IX_TelegramBotUsers_TelegramBotId",
+                table: "TelegramBotUsers",
+                column: "TelegramBotId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TelegramBotUsers_TelegramUserId",
+                table: "TelegramBotUsers",
                 column: "TelegramUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TelegramStates_TelegramBotUserId",
+                table: "TelegramStates",
+                column: "TelegramBotUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TelegramUsers_ChatId",
                 table: "TelegramUsers",
-                column: "ChatId");
+                column: "ChatId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TelegramUsers_Username",
+                table: "TelegramUsers",
+                column: "Username",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFiles_TelegramUserId",
@@ -155,19 +179,22 @@ namespace Allowed.Telegram.Bot.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "TelegramStates");
+                name: "TelegramBotUserRoles");
 
             migrationBuilder.DropTable(
-                name: "TelegramUserRoles");
+                name: "TelegramStates");
 
             migrationBuilder.DropTable(
                 name: "UserFiles");
 
             migrationBuilder.DropTable(
-                name: "TelegramBots");
+                name: "TelegramRoles");
 
             migrationBuilder.DropTable(
-                name: "TelegramRoles");
+                name: "TelegramBotUsers");
+
+            migrationBuilder.DropTable(
+                name: "TelegramBots");
 
             migrationBuilder.DropTable(
                 name: "TelegramUsers");

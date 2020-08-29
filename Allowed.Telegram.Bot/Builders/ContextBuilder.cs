@@ -1,46 +1,98 @@
-﻿using Allowed.Telegram.Bot.Helpers;
+﻿using Allowed.Telegram.Bot.Models.Store;
 using System;
 
 namespace Allowed.Telegram.Bot.Builders
 {
     public static class ContextBuilder
     {
-        public static object CreateTelegramUser(Type userType, long chatId, string username)
+        public static TUser CreateTelegramUser<TKey, TUser>(long chatId, string username)
+            where TKey : IEquatable<TKey>
+            where TUser : TelegramUser<TKey>
         {
-            object user = Activator.CreateInstance(userType);
+            TUser user = Activator.CreateInstance<TUser>();
 
-            user.SetProperty("ChatId", chatId);
-            user.SetProperty("Username", username);
+            user.ChatId = chatId;
+            user.Username = username;
 
             return user;
         }
 
-        public static object CreateTelegramRole(Type roleType, string role)
+        public static TRole CreateTelegramRole<TKey, TRole>(string roleName)
+            where TKey : IEquatable<TKey>
+            where TRole : TelegramRole<TKey>
         {
-            object user = Activator.CreateInstance(roleType);
+            TRole role = Activator.CreateInstance<TRole>();
 
-            roleType.GetProperty("Name").SetValue(user, role);
+            role.Name = roleName;
 
-            return user;
+            return role;
         }
 
-        public static object CreateTelegramUserRole(Type userRoleType, object userId, object roleId)
+        public static TBot CreateTelegramBot<TKey, TBot>(string botName)
+            where TKey : IEquatable<TKey>
+            where TBot : TelegramBot<TKey>
         {
-            object userRole = Activator.CreateInstance(userRoleType);
+            TBot bot = Activator.CreateInstance<TBot>();
 
-            userRole.SetProperty("UserId", userId);
-            userRole.SetProperty("RoleId", roleId);
+            bot.Name = botName;
+
+            return bot;
+        }
+
+        public static TBotUser CreateTelegramBotUser<TKey, TBotUser>(TKey userId, TKey botId)
+            where TKey : IEquatable<TKey>
+            where TBotUser : TelegramBotUser<TKey>
+        {
+            TBotUser botUser = Activator.CreateInstance<TBotUser>();
+
+            botUser.TelegramUserId = userId;
+            botUser.TelegramBotId = botId;
+
+            return botUser;
+        }
+
+        public static object CreateTelegramBotUser<TKey>(Type botUserType, TKey userId, TKey botId)
+            where TKey : IEquatable<TKey>
+        {
+            object botUser = Activator.CreateInstance(botUserType);
+
+            botUserType.GetProperty("TelegramUserId").SetValue(botUser, userId);
+            botUserType.GetProperty("TelegramBotId").SetValue(botUser, botId);
+
+            return botUser;
+        }
+
+        public static TBotUserRole CreateTelegramBotUserRole<TKey, TBotUserRole>(TKey botUserId, TKey roleId)
+            where TKey : IEquatable<TKey>
+            where TBotUserRole : TelegramBotUserRole<TKey>
+        {
+            TBotUserRole userRole = Activator.CreateInstance<TBotUserRole>();
+
+            userRole.TelegramBotUserId = botUserId;
+            userRole.TelegramRoleId = roleId;
 
             return userRole;
         }
 
-        public static object CreateTelegramState(Type stateType, object userId, object botId, string value)
+        public static object CreateTelegramBotUserRole<TKey>(Type botUserRoleType, TKey botUserId, TKey roleId)
+            where TKey : IEquatable<TKey>
         {
-            object state = Activator.CreateInstance(stateType);
+            object botUserRole = Activator.CreateInstance(botUserRoleType);
 
-            stateType.GetProperty("TelegramUserId").SetValue(state, userId);
-            stateType.GetProperty("TelegramBotId").SetValue(state, botId);
-            stateType.GetProperty("Value").SetValue(state, value);
+            botUserRoleType.GetProperty("TelegramBotUserId").SetValue(botUserRole, botUserId);
+            botUserRoleType.GetProperty("TelegramRoleId").SetValue(botUserRole, roleId);
+
+            return botUserRole;
+        }
+
+        public static TState CreateTelegramState<TKey, TState>(TKey botUserId, string value)
+            where TKey : IEquatable<TKey>
+            where TState : TelegramState<TKey>
+        {
+            TState state = Activator.CreateInstance<TState>();
+
+            state.TelegramBotUserId = botUserId;
+            state.Value = value;
 
             return state;
         }

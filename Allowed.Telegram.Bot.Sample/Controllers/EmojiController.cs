@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
-    public class EmojiController : CommandController
+    [BotName("Sample")]
+    public class EmojiController : CommandController<int>
     {
         [EmojiCommand("😀")]
         public async Task EmojiTest(MessageData data)

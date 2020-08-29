@@ -9,7 +9,8 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {
-    public class CallbackController : CommandController
+    [BotName("Sample")]
+    public class CallbackController : CommandController<int>
     {
         [Command("query")]
         public async Task CallbackQuery(MessageData data)

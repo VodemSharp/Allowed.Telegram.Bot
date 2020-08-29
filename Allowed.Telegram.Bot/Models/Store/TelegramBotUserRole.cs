@@ -2,13 +2,10 @@
 
 namespace Allowed.Telegram.Bot.Models.Store
 {
-    public class TelegramState<TKey>
+    public class TelegramBotUserRole<TKey>
         where TKey : IEquatable<TKey>
     {
-        public virtual TKey Id { get; set; }
-
         public virtual TKey TelegramBotUserId { get; set; }
-
-        public virtual string Value { get; set; }
+        public virtual TKey TelegramRoleId { get; set; }
     }
 }

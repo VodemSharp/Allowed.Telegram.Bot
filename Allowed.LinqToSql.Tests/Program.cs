@@ -52,8 +52,9 @@ namespace Allowed.LinqToSql.Tests
             //sqlQuery = db.TelegramUserRoles.Include(tur => tur.TelegramUser).Include(tur => tur.TelegramRole)
             //    .Where(tur => tur.TelegramRole.Id == 1).Select(tur => tur.TelegramUser).ToSql();
 
-            sqlQuery = db.TelegramUserRoles.Include(tur => tur.TelegramRole).Include(tur => tur.TelegramUser)
-                .Where(r => r.TelegramUser.ChatId == 1 && r.TelegramRoleId == 2).ToSql();
+            //sqlQuery = db.TelegramBotUserRoles.Include(tur => tur.TelegramRole)
+            //    .Include(tur => tur.TelegramBotUser).ThenInclude(tur => tur.TelegramUser)
+            //    .Where(r => r.TelegramBotUser.TelegramUser.ChatId == 1 && r.TelegramRoleId == 2).ToSql();
 
             #endregion
 

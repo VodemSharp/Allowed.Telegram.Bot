@@ -1,15 +1,17 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Controllers;
-using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Tests.Controllers
 {
-    public class DefaultController : CommandController
+    public class DefaultController : CommandController<int>
     {
         [DefaultCommand]
-        public Task DefaultCommand()
-        {
-            return Task.CompletedTask;
-        }
+        public string DefaultCommand() => "DC1";
+
+        [TextCommand]
+        public string TextCommand() => "DC2";
+
+        [EmojiDefaultCommand]
+        public string EmojiDefaultCommand() => "DC3";
     }
 }

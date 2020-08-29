@@ -1,167 +1,68 @@
 ﻿using Allowed.Telegram.Bot.Builders;
-using Allowed.Telegram.Bot.Helpers;
+using Allowed.Telegram.Bot.Models.Store;
 using Allowed.Telegram.Bot.Options;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Services.UserServices
 {
-    public class UserService<TUser> : IUserService<TUser>
-        where TUser : class
+    public class UserService<TKey, TUser> : IUserService<TKey, TUser>
+        where TKey : IEquatable<TKey>
+        where TUser : TelegramUser<TKey>
     {
-        private readonly DbContext _db;
         private readonly ContextOptions _options;
+        private readonly DbContext _db;
+        private readonly TKey _botId;
 
-        public UserService(IServiceProvider provider, ContextOptions options)
+        public UserService(IServiceProvider provider, ContextOptions options, TKey botId)
         {
             _db = (DbContext)provider.GetService(options.ContextType);
             _options = options;
+            _botId = botId;
         }
 
-        public void CheckUser(long chatId, string username)
+        public async Task CheckUser(long chatId, string username)
         {
-            if (GetUser(chatId) == null)
+            TUser user = await GetUser(chatId);
+
+            // If user does't use one of bots in db
+            if (user == null)
             {
-                _db.Add(ContextBuilder.CreateTelegramUser(typeof(TUser), chatId, username));
-                _db.SaveChanges();
+                user = ContextBuilder.CreateTelegramUser<TKey, TUser>(chatId, username);
+
+                await _db.Set<TUser>().AddAsync(user);
+                await _db.SaveChangesAsync();
+
+                await _db.AddAsync(ContextBuilder.CreateTelegramBotUser(_options.BotUserType, user.Id, _botId));
+                await _db.SaveChangesAsync();
+            }
+            // If user exists in db, but doesn't use bot
+            else if (!await _db.Set<TUser>().FromSqlRaw(
+                  "SELECT t1.* "
+                + "FROM TelegramUsers as t1 "
+                + "INNER JOIN TelegramBotUsers as t2 ON t1.Id = t2.TelegramUserId "
+                + $"WHERE t1.Id = {user.Id} AND t2.TelegramBotId = {_botId} "
+                + "LIMIT 1").AnyAsync())
+            {
+                await _db.AddAsync(ContextBuilder.CreateTelegramBotUser(_options.BotUserType, user.Id, _botId));
+                await _db.SaveChangesAsync();
+            }
+
+            // If user set username after starting bot
+            if (!string.IsNullOrEmpty(username) && string.IsNullOrEmpty(user.Username))
+            {
+                user.Username = username;
+
+                _db.Set<TUser>().Update(user);
+                await _db.SaveChangesAsync();
             }
         }
 
-        public TUser GetUser(long chatId)
+        private async Task<TUser> GetUser(long chatId)
         {
-            return _db.Set<TUser>().FromSqlRaw(
-                "SELECT t.* " +
-                "FROM TelegramUsers AS t " +
-                "WHERE t.ChatId = {0} " +
-                "LIMIT 1", chatId).FirstOrDefault();
-        }
-
-        public void AddUserRole(long chatId, int roleId)
-        {
-            TUser user = GetUser(chatId);
-
-            if (user != null)
-            {
-                _db.Set(_options.UserRoleType).Add(
-                    ContextBuilder.CreateTelegramUserRole(_options.UserRoleType, user.GetProperty("Id"), roleId));
-
-                _db.SaveChanges();
-            }
-        }
-
-
-        public void AddUserRole(long chatId, string roleName)
-        {
-            TUser user = GetUser(chatId);
-            object role = _db.Set(_options.RoleType).FromSqlInterpolated(
-                $"SELECT t.* FROM TelegramRoles` AS t WHERE t.Name = '{roleName}' LIMIT 1")
-                .FirstOrDefault();
-
-            if (user != null && role != null)
-            {
-                _db.Set(_options.UserRoleType).Add(ContextBuilder.CreateTelegramUserRole(
-                    _options.UserRoleType, user.GetProperty("Id"), role.GetProperty("Id")));
-                _db.SaveChanges();
-            }
-        }
-
-        public IEnumerable<TUser> GetUsersByRole(string roleName)
-        {
-            return (IEnumerable<TUser>)_db.FromSqlRaw(
-                "SELECT t1.* " +
-                "FROM TelegramUserRoles AS t " +
-                "INNER JOIN TelegramRoles AS t0 ON t.TelegramRoleId = t0.Id " +
-                "INNER JOIN TelegramUsers AS t1 ON t.TelegramUserId = t1.Id " +
-               $"WHERE t0.Name = '{roleName}'", _options.RoleType).FirstOrDefault();
-        }
-
-        public IEnumerable<TUser> GetUsersByRoles(IEnumerable<string> roles)
-        {
-            return (IEnumerable<TUser>)_db.FromSqlRaw(
-                "SELECT t1.* " +
-                "FROM TelegramUserRoles AS t " +
-                "INNER JOIN TelegramRoles AS t0 ON t.TelegramRoleId = t0.Id " +
-                "INNER JOIN TelegramUsers AS t1 ON t.TelegramUserId = t1.Id " +
-               $"WHERE t0.Name IN ({string.Join(", ", roles.Select(r => r.Select(ir => $"'{ir}'")))})",
-                _options.UserType);
-        }
-
-        public IEnumerable<TUser> GetUsersByRole(int roleId)
-        {
-            return (IEnumerable<TUser>)_db.FromSqlRaw(
-                "SELECT t1.* " +
-                "FROM TelegramUserRoles AS t " +
-                "INNER JOIN TelegramRoles AS t0 ON t.TelegramRoleId = t0.Id " +
-                "INNER JOIN TelegramUsers AS t1 ON t.TelegramUserId = t1.Id " +
-               $"WHERE t0.Id = '{roleId}'", _options.RoleType).FirstOrDefault();
-        }
-
-        public IEnumerable<TUser> GetUsersByRoles(IEnumerable<int> roleIds)
-        {
-            return (IEnumerable<TUser>)_db.FromSqlRaw(
-                "SELECT t1.* " +
-                "FROM TelegramUserRoles AS t " +
-                "INNER JOIN TelegramRoles AS t0 ON t.TelegramRoleId = t0.Id " +
-                "INNER JOIN TelegramUsers AS t1 ON t.TelegramUserId = t1.Id " +
-               $"WHERE t0.Name IN ({string.Join(", ", roleIds)})",
-                _options.UserType);
-        }
-
-
-        public bool AnyUserRole(long chatId, int roleId)
-        {
-            return _db.Set(_options.UserRoleType).FromSqlRaw(
-                 "SELECT t.* " +
-                 "FROM TelegramUserRoles AS t " +
-                 "INNER JOIN TelegramUsers AS t0 ON t.TelegramUserId = t0.Id " +
-                $"WHERE (t0.ChatId = {chatId}) AND (t.TelegramRoleId = {roleId})" +
-                 "LIMIT 1").Any();
-        }
-
-        public bool AnyUserRole(long chatId, string roleName)
-        {
-            return _db.Set(_options.UserRoleType).FromSqlRaw(
-                 "SELECT t.* " +
-                 "FROM TelegramUserRoles AS t " +
-                 "INNER JOIN TelegramUsers AS t0 ON t.TelegramUserId = t0.Id " +
-                 "INNER JOIN TelegramRoles AS t1 ON t.TelegramRoleId = t1.Id " +
-                $"WHERE (t0.ChatId = {chatId}) AND (t1.Name = {roleName})" +
-                 "LIMIT 1").Any();
-        }
-
-        private object GetUserRole(long chatId, int roleId)
-        {
-            return _db.Set(_options.UserRoleType).FromSqlRaw(
-                 "SELECT t.* " +
-                 "FROM TelegramUserRoles AS t " +
-                 "INNER JOIN TelegramUsers AS t0 ON t.TelegramUserId = t0.Id " +
-                $"WHERE (t0.ChatId = {chatId}) AND (t.TelegramRoleId = {roleId})" +
-                 "LIMIT 1").FirstOrDefault();
-        }
-
-        private object GetUserRole(long chatId, string roleName)
-        {
-            return _db.Set(_options.UserRoleType).FromSqlRaw(
-                   "SELECT t.* " +
-                   "FROM TelegramUserRoles AS t " +
-                   "INNER JOIN TelegramUsers AS t0 ON t.TelegramUserId = t0.Id " +
-                   "INNER JOIN TelegramRoles AS t1 ON t.TelegramRoleId = t1.Id " +
-                  $"WHERE (t0.ChatId = {chatId}) AND (t1.Name = {roleName})" +
-                   "LIMIT 1").FirstOrDefault();
-        }
-
-        public void RemoveUserRole(long chatId, int roleId)
-        {
-            _db.Set(_options.UserRoleType).Remove(GetUserRole(chatId, roleId));
-            _db.SaveChanges();
-        }
-
-        public void RemoveUserRole(long chatId, string role)
-        {
-            _db.Set(_options.UserRoleType).Remove(GetUserRole(chatId, role));
-            _db.SaveChanges();
+            return await _db.Set<TUser>()
+                .FirstOrDefaultAsync(u => u.ChatId == chatId);
         }
     }
 }

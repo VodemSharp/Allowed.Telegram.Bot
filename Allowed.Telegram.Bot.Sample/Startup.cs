@@ -16,7 +16,7 @@ namespace Allowed.Telegram.Bot.Sample
                 ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             services.AddTelegramClients(new BotData[] {
-                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample1" },
+                    new BotData { Token = "1235322308:AAGlWMx1Avo52Hjr3ST22e7XKw577qFwOrg", Name = "Sample" },
                     new BotData { Token = "1289911268:AAE4j2kkt8dPZKKr2MLpGLTP65gvaKA-sDA", Name = "Sample2" },
                 })
                 .AddTelegramStore<ApplicationDbContext>();
