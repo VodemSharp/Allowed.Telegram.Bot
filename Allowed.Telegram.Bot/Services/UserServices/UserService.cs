@@ -65,6 +65,26 @@ namespace Allowed.Telegram.Bot.Services.UserServices
             return await _db.Set<TUser>().FirstOrDefaultAsync(u => u.ChatId == chatId);
         }
 
+        public async Task<List<TUser>> GetUsers()
+        {
+            return await _db.Set<TUser>().FromSqlRaw(
+                  "SELECT t2.* "
+                + "FROM TelegramBotUsers AS t1 "
+                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
+                + $"WHERE t1.TelegramBotId = {_botId} ")
+                .ToListAsync();
+        }
+
+        public async Task<int> CountUsers()
+        {
+            return await _db.Set<TUser>().FromSqlRaw(
+                  "SELECT t2.* "
+                + "FROM TelegramBotUsers AS t1 "
+                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
+                + $"WHERE t1.TelegramBotId = {_botId} ")
+                .CountAsync();
+        }
+
         public async Task<bool> AnyUser(long chatId)
         {
             return await _db.Set<TUser>().FromSqlRaw(
@@ -110,6 +130,16 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
                 + $"WHERE t1.TelegramBotId = {_botId} AND t2.Username = '{username}' "
                 + "LIMIT 1").FirstOrDefaultAsync();
+        }
+
+        public async Task<TKey> GetBotUserId(long chatId)
+        {
+            return await _db.GetBotUserId(_botId, chatId);
+        }
+
+        public async Task<TKey> GetBotUserId(string username)
+        {
+            return await _db.GetBotUserId(_botId, username);
         }
 
         public async Task<List<TUser>> GetUsersByRole(string role)

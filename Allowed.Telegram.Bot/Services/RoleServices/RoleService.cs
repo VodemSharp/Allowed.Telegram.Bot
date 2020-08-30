@@ -64,32 +64,9 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
               + "LIMIT 1").AnyAsync();
         }
 
-        private async Task<TKey> GetBotUserId(long chatId)
-        {
-            TKey result;
-
-            var connection = _db.Database.GetDbConnection();
-            if (connection.State == ConnectionState.Closed) await connection.OpenAsync();
-
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText =
-                    "SELECT t2.Id "
-                  + "FROM TelegramUsers AS t1 "
-                  + "INNER JOIN TelegramBotUsers AS t2 ON t1.Id = t2.TelegramUserId "
-                  + $"WHERE t1.ChatId = {chatId} AND t2.TelegramBotId = {_botId} "
-                  + "LIMIT 1";
-
-                result = (TKey)await command.ExecuteScalarAsync();
-            }
-
-            if (connection.State == ConnectionState.Open) await connection.CloseAsync();
-            return result;
-        }
-
         public async Task AddUserRole(long chatId, string role)
         {
-            TKey botUserId = await GetBotUserId(chatId);
+            TKey botUserId = await _db.GetBotUserId(_botId, chatId);
             TKey roleId = (await _db.Set<TRole>().FirstAsync(r => r.Name == role)).Id;
 
             await _db.AddAsync(ContextBuilder.CreateTelegramBotUserRole(_options.BotUserRoleType, botUserId, roleId));

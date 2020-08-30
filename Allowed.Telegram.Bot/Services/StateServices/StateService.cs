@@ -43,60 +43,13 @@ namespace Allowed.Telegram.Bot.Services.StateServices
               + "LIMIT 1").FirstOrDefaultAsync();
         }
 
-        private async Task<TKey> GetBotUserId(long chatId)
-        {
-            TKey result;
-
-            var connection = _db.Database.GetDbConnection();
-            if (connection.State == ConnectionState.Closed) await connection.OpenAsync();
-
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText =
-                    "SELECT t2.Id "
-                  + "FROM TelegramUsers AS t1 "
-                  + "INNER JOIN TelegramBotUsers AS t2 ON t1.Id = t2.TelegramUserId "
-                  + $"WHERE t1.ChatId = {chatId} AND t2.TelegramBotId = {_botId} "
-                  + "LIMIT 1";
-
-                result = (TKey)await command.ExecuteScalarAsync();
-            }
-
-            if (connection.State == ConnectionState.Open) await connection.CloseAsync();
-            return result;
-        }
-
-        private async Task<TKey> GetBotUserId(string username)
-        {
-            TKey result;
-
-            var connection = _db.Database.GetDbConnection();
-            if (connection.State == ConnectionState.Closed) await connection.OpenAsync();
-
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText =
-                    "SELECT t2.Id "
-                  + "FROM TelegramUsers AS t1 "
-                  + "INNER JOIN TelegramBotUsers AS t2 ON t1.Id = t2.TelegramUserId "
-                  + $"WHERE t1.Username = '{username}' AND t2.TelegramBotId = {_botId} "
-                  + "LIMIT 1";
-
-                result = (TKey)await command.ExecuteScalarAsync();
-            }
-
-            if (connection.State == ConnectionState.Open) await connection.CloseAsync();
-            return result;
-        }
-
-
         public async Task SetState(string username, string value)
         {
             TState state = await GetState(username);
 
             if (state == null)
             {
-                TKey botUserId = await GetBotUserId(username);
+                TKey botUserId = await _db.GetBotUserId(_botId, username);
                 await _db.Set<TState>().AddAsync(
                     ContextBuilder.CreateTelegramState<TKey, TState>(botUserId, value));
             }
@@ -115,7 +68,7 @@ namespace Allowed.Telegram.Bot.Services.StateServices
 
             if (state == null)
             {
-                TKey botUserId = await GetBotUserId(chatId);
+                TKey botUserId = await _db.GetBotUserId(_botId, chatId);
                 await _db.Set<TState>().AddAsync(
                     ContextBuilder.CreateTelegramState<TKey, TState>(botUserId, value));
             }
