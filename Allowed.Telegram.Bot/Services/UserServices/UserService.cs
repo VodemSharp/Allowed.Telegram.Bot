@@ -71,7 +71,7 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                   "SELECT t2.* "
                 + "FROM TelegramBotUsers AS t1 "
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} ")
+                + $"WHERE t1.TelegramBotId = {_botId}")
                 .ToListAsync();
         }
 
@@ -81,7 +81,7 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                   "SELECT t2.* "
                 + "FROM TelegramBotUsers AS t1 "
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} ")
+                + $"WHERE t1.TelegramBotId = {_botId}")
                 .CountAsync();
         }
 
@@ -150,7 +150,7 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                 + "INNER JOIN TelegramRoles as t2 ON t1.TelegramRoleId = t2.Id) "
                 + "INNER JOIN TelegramBotUsers as t3 ON t1.TelegramBotUserId = t3.Id) "
                 + "INNER JOIN TelegramUsers as t4 ON t3.TelegramUserId = t4.Id) "
-                + $"WHERE t2.Name = '{role}' AND t3.TelegramBotId = {_botId})").ToListAsync();
+                + $"WHERE t2.Name = '{role}' AND t3.TelegramBotId = {_botId}").ToListAsync();
         }
     }
 }

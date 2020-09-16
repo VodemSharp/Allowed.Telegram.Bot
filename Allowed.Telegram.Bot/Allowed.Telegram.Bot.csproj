@@ -6,7 +6,7 @@
     <Company>Allowed Inc.</Company>
     <Authors>VodemSharp</Authors>
     <Product>AllowedSharp</Product>
-    <Version>2.0.1</Version>
+    <Version>2.0.3</Version>
     <PackageId>Allowed.Telegram.Bot</PackageId>
     <PackageDescription>Controller system for Telegram bots.</PackageDescription>
     <RepositoryUrl></RepositoryUrl>

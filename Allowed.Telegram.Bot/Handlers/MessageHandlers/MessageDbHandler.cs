@@ -89,7 +89,11 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                     .CreateInstance(_provider, method.ControllerType);
 
                 controller.BotId = botId;
-                controller.Initialize(_provider.GetService<IServiceFactory>());
+
+                IServiceFactory serviceFactory = _provider.GetService<IServiceFactory>();
+
+                controller.Initialize(serviceFactory);
+                await controller.InitializeAsync(serviceFactory);
 
                 return method.Method.Invoke(controller, parameters.ToArray());
             }
