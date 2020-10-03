@@ -3,6 +3,7 @@ using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Factories.ServiceFactories;
 using Allowed.Telegram.Bot.Helpers;
+using Allowed.Telegram.Bot.Middlewares;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Enums;
 using Allowed.Telegram.Bot.Models.Store;
@@ -92,10 +93,10 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 
                 IServiceFactory serviceFactory = _provider.GetService<IServiceFactory>();
 
-                controller.Initialize(serviceFactory);
-                await controller.InitializeAsync(serviceFactory);
+                controller.Initialize(serviceFactory, message.Chat.Id);
+                await controller.InitializeAsync(serviceFactory, message.Chat.Id);
 
-                return method.Method.Invoke(controller, parameters.ToArray());
+                return await MethodHelper.InvokeMethod(method.Method, parameters, controller);
             }
 
             return null;
@@ -105,7 +106,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         {
             TelegramMethod method = await GetMethod(type, callback);
 
-            if (method.ControllerType != null && method.Method != null)
+            if (method != null && method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
                 List<object> parameters = new List<object> { };
@@ -133,9 +134,13 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                     .CreateInstance(_provider, method.ControllerType);
 
                 controller.BotId = botId;
-                controller.Initialize(_provider.GetService<IServiceFactory>());
 
-                return method.Method.Invoke(controller, parameters.ToArray());
+                IServiceFactory serviceFactory = _provider.GetService<IServiceFactory>();
+
+                controller.Initialize(serviceFactory, callback.Message.Chat.Id);
+                await controller.InitializeAsync(serviceFactory, callback.Message.Chat.Id);
+
+                return await MethodHelper.InvokeMethod(method.Method, parameters, controller);
             }
 
             return null;
@@ -144,18 +149,49 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         public async Task<object> OnMessage(MessageEventArgs e, TKey botId)
         {
             Message message = e.Message;
+            object result = await InvokeMethod(GetMethodType(message), message, botId);
 
-            return await InvokeMethod(GetMethodType(message), message, botId);
+            MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
+            if (messageMiddleware != null)
+            {
+                messageMiddleware.AfterMessageProcessed(botId, e.Message.Chat.Id);
+                await messageMiddleware.AfterMessageProcessedAsync(botId, e.Message.Chat.Id);
+            }
+
+            return result;
         }
 
         public async Task<object> OnCallbackQuery(CallbackQueryEventArgs e, TKey botId)
         {
             CallbackQuery callback = e.CallbackQuery;
+            object result = null;
 
             if (e.CallbackQuery.Data != null)
-                return await InvokeCallback(MethodType.Callback, callback, botId);
+                result = await InvokeCallback(MethodType.Callback, callback, botId);
 
-            return null;
+            MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
+            if (messageMiddleware != null)
+            {
+                messageMiddleware.AfterCallbackProcessed(botId, e.CallbackQuery.Message.Chat.Id);
+                await messageMiddleware.AfterCallbackProcessedAsync(botId, e.CallbackQuery.Message.Chat.Id);
+            }
+
+            return result;
+        }
+
+        public async Task<object> OnInlineQuery(MessageEventArgs e, TKey botId)
+        {
+            Message message = e.Message;
+            object result = await InvokeMethod(GetMethodType(message), message, botId);
+
+            MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
+            if (messageMiddleware != null)
+            {
+                messageMiddleware.AfterMessageProcessed(botId, e.Message.Chat.Id);
+                await messageMiddleware.AfterMessageProcessedAsync(botId, e.Message.Chat.Id);
+            }
+
+            return result;
         }
     }
 }

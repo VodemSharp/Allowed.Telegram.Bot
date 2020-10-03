@@ -42,6 +42,14 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
                                         Path = "test",
                                         SomeData = false
                                     })
+                            },
+                            new InlineKeyboardButton
+                            {
+                                Text = "Default",
+                                CallbackData = JsonConvert.SerializeObject(
+                                    new CallbackQueryModel {
+                                        Path = "default"
+                                    })
                             }
                         }
                     }

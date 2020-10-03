@@ -1,6 +1,7 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Helpers;
+using Allowed.Telegram.Bot.Middlewares;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -154,8 +156,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                     });
                 }
 
-                return method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
-                    parameters.ToArray());
+                object instance = ActivatorUtilities.CreateInstance(_provider, method.ControllerType);
+                return await MethodHelper.InvokeMethod(method.Method, parameters, instance);
             }
 
             return null;
@@ -165,7 +167,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         {
             TelegramMethod method = await GetMethod(type, callback);
 
-            if (method.ControllerType != null && method.Method != null)
+            if (method != null && method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
                 List<object> parameters = new List<object> { };
@@ -189,8 +191,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                     parameters.Add(JsonConvert.DeserializeObject(
                         callback.Data, methodParams.First(p => p.ParameterType.IsSubclassOf(callbackType)).ParameterType));
 
-                return method.Method.Invoke(ActivatorUtilities.CreateInstance(_provider, method.ControllerType),
-                    parameters.ToArray());
+                object instance = ActivatorUtilities.CreateInstance(_provider, method.ControllerType);
+                return await MethodHelper.InvokeMethod(method.Method, parameters, instance);
             }
 
             return null;
@@ -215,17 +217,49 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         public async Task<object> OnMessage(MessageEventArgs e)
         {
             Message message = e.Message;
+            object result = await InvokeMethod(GetMethodType(message), message);
 
-            return await InvokeMethod(GetMethodType(message), message);
+            MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+            if (messageMiddleware != null)
+            {
+                messageMiddleware.AfterMessageProcessed(e.Message.Chat.Id);
+                await messageMiddleware.AfterMessageProcessedAsync(e.Message.Chat.Id);
+            }
+
+            return result;
         }
 
         public async Task<object> OnCallbackQuery(CallbackQueryEventArgs e)
         {
             CallbackQuery callback = e.CallbackQuery;
+            object result = null;
 
             if (e.CallbackQuery.Data != null)
-                return await InvokeCallback(MethodType.Callback, callback);
+                result = await InvokeCallback(MethodType.Callback, callback);
 
+            MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+            if (messageMiddleware != null)
+            {
+                messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.Message.Chat.Id);
+                await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.Message.Chat.Id);
+            }
+
+            return result;
+        }
+
+        public async Task<object> OnInlineQuery(InlineQueryEventArgs e)
+        {
+            //Message message = e.Message;
+            //object result = await InvokeMethod(GetMethodType(message), message);
+
+            //MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+            //if (messageMiddleware != null)
+            //{
+            //    messageMiddleware.AfterMessageProcessed(e.Message.Chat.Id);
+            //    await messageMiddleware.AfterMessageProcessedAsync(e.Message.Chat.Id);
+            //}
+
+            //return result;
             return null;
         }
     }

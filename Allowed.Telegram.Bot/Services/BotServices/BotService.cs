@@ -45,6 +45,7 @@ namespace Allowed.Telegram.Bot.Services.BotServices
 
                 client.Client.OnMessage += async (a, b) => await messageHandler.OnMessage(b);
                 client.Client.OnCallbackQuery += async (a, b) => await messageHandler.OnCallbackQuery(b);
+                client.Client.OnInlineQuery += async (a, b) => await messageHandler.OnInlineQuery(b);
 
                 client.Client.StartReceiving();
             }
