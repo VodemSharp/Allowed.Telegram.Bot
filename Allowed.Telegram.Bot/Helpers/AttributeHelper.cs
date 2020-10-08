@@ -65,5 +65,15 @@ namespace Allowed.Telegram.Bot.Helpers
         {
             return (CallbackQueryAttribute[])method.GetCustomAttributes<CallbackQueryAttribute>(false);
         }
+
+        public static CallbackDefaultQueryAttribute[] GetCallbackDefaultQueryAttributes(this MethodInfo method)
+        {
+            return (CallbackDefaultQueryAttribute[])method.GetCustomAttributes<CallbackDefaultQueryAttribute>(false);
+        }
+
+        public static InlineQueryAttribute[] GetInlineQueryAttributes(this MethodInfo method)
+        {
+            return (InlineQueryAttribute[])method.GetCustomAttributes<InlineQueryAttribute>(false);
+        }
     }
 }

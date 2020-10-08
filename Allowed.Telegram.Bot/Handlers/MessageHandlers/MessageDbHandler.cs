@@ -146,6 +146,32 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             return null;
         }
 
+        private async Task<object> InvokeInline(MethodType type, InlineQuery inline)
+        {
+            TelegramMethod method = await GetMethod(type, inline);
+
+            if (method != null && method.ControllerType != null && method.Method != null)
+            {
+                ParameterInfo[] methodParams = method.Method.GetParameters();
+                List<object> parameters = new List<object> { };
+
+                if (methodParams.Any(p => p.ParameterType == typeof(InlineQueryData)))
+                {
+                    parameters.Add(new InlineQueryData
+                    {
+                        InlineQuery = inline,
+                        Client = _client,
+                        BotData = _botData
+                    });
+                }
+
+                object instance = ActivatorUtilities.CreateInstance(_provider, method.ControllerType);
+                return await MethodHelper.InvokeMethod(method.Method, parameters, instance);
+            }
+
+            return null;
+        }
+
         public async Task<object> OnMessage(MessageEventArgs e, TKey botId)
         {
             Message message = e.Message;
@@ -179,19 +205,9 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             return result;
         }
 
-        public async Task<object> OnInlineQuery(MessageEventArgs e, TKey botId)
+        public async Task<object> OnInlineQuery(InlineQueryEventArgs e, TKey botId)
         {
-            Message message = e.Message;
-            object result = await InvokeMethod(GetMethodType(message), message, botId);
-
-            MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
-            if (messageMiddleware != null)
-            {
-                messageMiddleware.AfterMessageProcessed(botId, e.Message.Chat.Id);
-                await messageMiddleware.AfterMessageProcessedAsync(botId, e.Message.Chat.Id);
-            }
-
-            return result;
+            return await InvokeInline(MethodType.Inline, e.InlineQuery);
         }
     }
 }

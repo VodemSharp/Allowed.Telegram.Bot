@@ -125,6 +125,31 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 method = allowedMethods.FirstOrDefault(m => m.GetCallbackQueryAttributes().Any(a => a.GetPath() == path));
             }
 
+            if (method == null)
+                method = allowedMethods.FirstOrDefault(m => m.GetCallbackDefaultQueryAttributes().Any());
+
+            if (method != null)
+            {
+                return new TelegramMethod
+                {
+                    ControllerType = _controllerTypes.First(c => c == method.DeclaringType),
+                    Method = method
+                };
+            }
+
+            return null;
+        }
+
+        protected async Task<TelegramMethod> GetMethod(MethodType type, InlineQuery inline)
+        {
+            MethodInfo method = null;
+            MethodInfo[] allowedMethods = await GetAllowedMethods(inline.From.Id);
+
+            if (type == MethodType.Inline)
+            {
+                method = allowedMethods.FirstOrDefault(m => m.GetInlineQueryAttributes().Any());
+            }
+
             if (method != null)
             {
                 return new TelegramMethod
@@ -198,6 +223,32 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             return null;
         }
 
+        private async Task<object> InvokeInline(MethodType type, InlineQuery inline)
+        {
+            TelegramMethod method = await GetMethod(type, inline);
+
+            if (method != null && method.ControllerType != null && method.Method != null)
+            {
+                ParameterInfo[] methodParams = method.Method.GetParameters();
+                List<object> parameters = new List<object> { };
+
+                if (methodParams.Any(p => p.ParameterType == typeof(InlineQueryData)))
+                {
+                    parameters.Add(new InlineQueryData
+                    {
+                        InlineQuery = inline,
+                        Client = _client,
+                        BotData = _botData
+                    });
+                }
+
+                object instance = ActivatorUtilities.CreateInstance(_provider, method.ControllerType);
+                return await MethodHelper.InvokeMethod(method.Method, parameters, instance);
+            }
+
+            return null;
+        }
+
         protected MethodType GetMethodType(Message message)
         {
             switch (message.Type)
@@ -249,18 +300,17 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 
         public async Task<object> OnInlineQuery(InlineQueryEventArgs e)
         {
-            //Message message = e.Message;
-            //object result = await InvokeMethod(GetMethodType(message), message);
+            InlineQuery inline = e.InlineQuery;
+            object result = await InvokeInline(MethodType.Inline, inline);
 
-            //MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-            //if (messageMiddleware != null)
-            //{
-            //    messageMiddleware.AfterMessageProcessed(e.Message.Chat.Id);
-            //    await messageMiddleware.AfterMessageProcessedAsync(e.Message.Chat.Id);
-            //}
+            MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+            if (messageMiddleware != null)
+            {
+                messageMiddleware.AfterCallbackProcessed(e.InlineQuery.From.Id);
+                await messageMiddleware.AfterCallbackProcessedAsync(e.InlineQuery.From.Id);
+            }
 
-            //return result;
-            return null;
+            return result;
         }
     }
 }

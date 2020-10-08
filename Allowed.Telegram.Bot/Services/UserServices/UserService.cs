@@ -51,7 +51,7 @@ namespace Allowed.Telegram.Bot.Services.UserServices
             }
 
             // If user set username after starting bot
-            if (!string.IsNullOrEmpty(username) && string.IsNullOrEmpty(user.Username))
+            if (username != user.Username)
             {
                 user.Username = username;
 

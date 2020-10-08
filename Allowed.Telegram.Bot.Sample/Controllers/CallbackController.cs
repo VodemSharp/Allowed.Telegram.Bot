@@ -62,5 +62,11 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         {
             await data.Client.SendTextMessageAsync(data.CallbackQuery.Message.Chat.Id, $"Model: {model.SomeData}");
         }
+
+        [CallbackDefaultQuery]
+        public async Task CallbackDefaultQuery(CallbackQueryData data, CallbackQueryModel model)
+        {
+            await data.Client.SendTextMessageAsync(data.CallbackQuery.Message.Chat.Id, $"Callback Default Query");
+        }
     }
 }

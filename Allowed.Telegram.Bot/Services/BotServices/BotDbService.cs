@@ -119,6 +119,19 @@ namespace Allowed.Telegram.Bot.Services.BotServices
                     await messageHandler.OnCallbackQuery(b, botId);
                 };
 
+                client.Client.OnInlineQuery += async (a, b) =>
+                {
+                    IUserService<TKey, TUser> userService = GetUserService(botId);
+                    IRoleService<TKey, TRole> roleService = GetRoleService(botId);
+                    IStateService<TKey, TState> stateService = GetStateService(botId);
+
+                    MessageDbHandler<TKey, TRole, TState> messageHandler =
+                        GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+
+                    await userService.CheckUser(b.InlineQuery.From.Id, b.InlineQuery.From.Username);
+                    await messageHandler.OnInlineQuery(b, botId);
+                };
+
                 client.Client.StartReceiving();
             }
 
