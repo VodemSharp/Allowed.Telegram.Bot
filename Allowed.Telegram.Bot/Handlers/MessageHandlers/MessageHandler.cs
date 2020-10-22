@@ -5,6 +5,7 @@ using Allowed.Telegram.Bot.Middlewares;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         protected readonly BotData _botData;
 
         protected readonly IServiceProvider _provider;
+        protected readonly ILogger<MessageHandler> _logger;
 
         public MessageHandler(ControllersCollection collection, ITelegramBotClient client,
             BotData botData, IServiceProvider provider)
@@ -40,6 +42,9 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 }).ToList();
 
             _provider = provider;
+
+            ILoggerFactory loggerFactory = provider.GetService<ILoggerFactory>();
+            _logger = loggerFactory.CreateLogger<MessageHandler>();
         }
 
         protected virtual Task<MethodInfo[]> GetAllowedMethods(long chatId)
@@ -268,13 +273,22 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         public async Task<object> OnMessage(MessageEventArgs e)
         {
             Message message = e.Message;
-            object result = await InvokeMethod(GetMethodType(message), message);
+            object result = null;
 
-            MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-            if (messageMiddleware != null)
+            try
             {
-                messageMiddleware.AfterMessageProcessed(e.Message.Chat.Id);
-                await messageMiddleware.AfterMessageProcessedAsync(e.Message.Chat.Id);
+                result = await InvokeMethod(GetMethodType(message), message);
+
+                MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+                if (messageMiddleware != null)
+                {
+                    messageMiddleware.AfterMessageProcessed(e.Message.Chat.Id);
+                    await messageMiddleware.AfterMessageProcessedAsync(e.Message.Chat.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
             }
 
             return result;
@@ -285,14 +299,21 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             CallbackQuery callback = e.CallbackQuery;
             object result = null;
 
-            if (e.CallbackQuery.Data != null)
-                result = await InvokeCallback(MethodType.Callback, callback);
-
-            MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-            if (messageMiddleware != null)
+            try
             {
-                messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.Message.Chat.Id);
-                await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.Message.Chat.Id);
+                if (e.CallbackQuery.Data != null)
+                    result = await InvokeCallback(MethodType.Callback, callback);
+
+                MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+                if (messageMiddleware != null)
+                {
+                    messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.Message.Chat.Id);
+                    await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.Message.Chat.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
             }
 
             return result;
@@ -301,13 +322,22 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         public async Task<object> OnInlineQuery(InlineQueryEventArgs e)
         {
             InlineQuery inline = e.InlineQuery;
-            object result = await InvokeInline(MethodType.Inline, inline);
+            object result = null;
 
-            MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-            if (messageMiddleware != null)
+            try
             {
-                messageMiddleware.AfterCallbackProcessed(e.InlineQuery.From.Id);
-                await messageMiddleware.AfterCallbackProcessedAsync(e.InlineQuery.From.Id);
+                result = await InvokeInline(MethodType.Inline, inline);
+
+                MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
+                if (messageMiddleware != null)
+                {
+                    messageMiddleware.AfterInlineProcessed(e.InlineQuery.From.Id);
+                    await messageMiddleware.AfterInlineProcessedAsync(e.InlineQuery.From.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
             }
 
             return result;

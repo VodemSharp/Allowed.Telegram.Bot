@@ -4,6 +4,7 @@ using Allowed.Telegram.Bot.Data.DbModels.Allowed;
 using Allowed.Telegram.Bot.Factories.ServiceFactories;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Services.RoleServices;
+using System;
 using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
@@ -56,6 +57,12 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         public async Task DefaultCommand(MessageData data)
         {
             await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed unknown command: {data.Message.Text}");
+        }
+
+        [Command("exception")]
+        public Task Exception(MessageData data)
+        {
+            throw new NotImplementedException();
         }
     }
 }
