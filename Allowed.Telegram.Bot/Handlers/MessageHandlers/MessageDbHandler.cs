@@ -94,8 +94,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 
                 IServiceFactory serviceFactory = _provider.GetService<IServiceFactory>();
 
-                controller.Initialize(serviceFactory, message.Chat.Id);
-                await controller.InitializeAsync(serviceFactory, message.Chat.Id);
+                controller.Initialize(serviceFactory, message.From.Id);
+                await controller.InitializeAsync(serviceFactory, message.From.Id);
 
                 return await MethodHelper.InvokeMethod(method.Method, parameters, controller);
             }
@@ -138,8 +138,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 
                 IServiceFactory serviceFactory = _provider.GetService<IServiceFactory>();
 
-                controller.Initialize(serviceFactory, callback.Message.Chat.Id);
-                await controller.InitializeAsync(serviceFactory, callback.Message.Chat.Id);
+                controller.Initialize(serviceFactory, callback.Message.From.Id);
+                await controller.InitializeAsync(serviceFactory, callback.Message.From.Id);
 
                 return await MethodHelper.InvokeMethod(method.Method, parameters, controller);
             }
@@ -195,8 +195,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
                 if (messageMiddleware != null)
                 {
-                    messageMiddleware.AfterMessageProcessed(botId, e.Message.Chat.Id);
-                    await messageMiddleware.AfterMessageProcessedAsync(botId, e.Message.Chat.Id);
+                    messageMiddleware.AfterMessageProcessed(botId, e.Message.From.Id);
+                    await messageMiddleware.AfterMessageProcessedAsync(botId, e.Message.From.Id);
                 }
             }
             catch (Exception ex)
@@ -220,8 +220,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
                 if (messageMiddleware != null)
                 {
-                    messageMiddleware.AfterCallbackProcessed(botId, e.CallbackQuery.Message.Chat.Id);
-                    await messageMiddleware.AfterCallbackProcessedAsync(botId, e.CallbackQuery.Message.Chat.Id);
+                    messageMiddleware.AfterCallbackProcessed(botId, e.CallbackQuery.Message.From.Id);
+                    await messageMiddleware.AfterCallbackProcessedAsync(botId, e.CallbackQuery.Message.From.Id);
                 }
             }
             catch (Exception ex)

@@ -57,7 +57,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         protected async Task<TelegramMethod> GetMethod(MethodType type, Message message)
         {
             MethodInfo method = null;
-            MethodInfo[] allowedMethods = await GetAllowedMethods(message.Chat.Id);
+            MethodInfo[] allowedMethods = await GetAllowedMethods(message.From.Id);
 
             switch (type)
             {
@@ -87,7 +87,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 
                     if (methods.Count != 0)
                     {
-                        string userState = await GetStateValue(message.Chat.Id);
+                        string userState = await GetStateValue(message.From.Id);
 
                         if (!string.IsNullOrEmpty(userState))
                             method = methods.FirstOrDefault(m => m.GetStateAttributes().Any(s => s.GetState() == userState));
@@ -121,7 +121,7 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
         protected async Task<TelegramMethod> GetMethod(MethodType type, CallbackQuery callback)
         {
             MethodInfo method = null;
-            MethodInfo[] allowedMethods = await GetAllowedMethods(callback.Message.Chat.Id);
+            MethodInfo[] allowedMethods = await GetAllowedMethods(callback.Message.From.Id);
 
             string path = JsonConvert.DeserializeObject<CallbackQueryModel>(callback.Data).Path;
 
@@ -282,8 +282,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
                 if (messageMiddleware != null)
                 {
-                    messageMiddleware.AfterMessageProcessed(e.Message.Chat.Id);
-                    await messageMiddleware.AfterMessageProcessedAsync(e.Message.Chat.Id);
+                    messageMiddleware.AfterMessageProcessed(e.Message.From.Id);
+                    await messageMiddleware.AfterMessageProcessedAsync(e.Message.From.Id);
                 }
             }
             catch (Exception ex)
@@ -307,8 +307,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
                 if (messageMiddleware != null)
                 {
-                    messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.Message.Chat.Id);
-                    await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.Message.Chat.Id);
+                    messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.Message.From.Id);
+                    await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.Message.From.Id);
                 }
             }
             catch (Exception ex)

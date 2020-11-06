@@ -102,7 +102,7 @@ namespace Allowed.Telegram.Bot.Services.BotServices
                     MessageDbHandler<TKey, TRole, TState> messageHandler =
                         GetMessageHandler(roleService, stateService, client.Client, client.BotData);
 
-                    await userService.CheckUser(b.Message.Chat.Id, b.Message.Chat.Username);
+                    await userService.CheckUser(b.Message.From.Id, b.Message.From.Username);
                     await messageHandler.OnMessage(b, botId);
                 };
 
@@ -115,7 +115,7 @@ namespace Allowed.Telegram.Bot.Services.BotServices
                     MessageDbHandler<TKey, TRole, TState> messageHandler =
                         GetMessageHandler(roleService, stateService, client.Client, client.BotData);
 
-                    await userService.CheckUser(b.CallbackQuery.Message.Chat.Id, b.CallbackQuery.Message.Chat.Username);
+                    await userService.CheckUser(b.CallbackQuery.Message.From.Id, b.CallbackQuery.Message.From.Username);
                     await messageHandler.OnCallbackQuery(b, botId);
                 };
 
