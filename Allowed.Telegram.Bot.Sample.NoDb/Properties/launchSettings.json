@@ -1,10 +1,10 @@
-{
+﻿{
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:57447",
-      "sslPort": 44336
+      "applicationUrl": "http://localhost:56259",
+      "sslPort": 44354
     }
   },
   "profiles": {
@@ -17,10 +17,12 @@
     },
     "Allowed.Telegram.Bot.Sample.NoDb": {
       "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+      }
     }
   }
 }

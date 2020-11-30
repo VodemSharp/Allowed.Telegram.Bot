@@ -32,14 +32,14 @@ namespace Allowed.Telegram.Bot.Services.StateServices
               + "LIMIT 1").FirstOrDefaultAsync();
         }
 
-        public async Task<TState> GetState(long chatId)
+        public async Task<TState> GetState(long telegramId)
         {
             return await _db.Set<TState>().FromSqlRaw(
                 "SELECT t1.* "
               + "FROM ((TelegramStates AS t1 "
               + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
               + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
-              + $"WHERE t3.ChatId = {chatId} AND t2.TelegramBotId = {_botId} "
+              + $"WHERE t3.TelegramId = {telegramId} AND t2.TelegramBotId = {_botId} "
               + "LIMIT 1").FirstOrDefaultAsync();
         }
 
@@ -62,13 +62,13 @@ namespace Allowed.Telegram.Bot.Services.StateServices
             await _db.SaveChangesAsync();
         }
 
-        public async Task SetState(long chatId, string value)
+        public async Task SetState(long telegramId, string value)
         {
-            TState state = await GetState(chatId);
+            TState state = await GetState(telegramId);
 
             if (state == null)
             {
-                TKey botUserId = await _db.GetBotUserId(_botId, chatId);
+                TKey botUserId = await _db.GetBotUserId(_botId, telegramId);
                 await _db.Set<TState>().AddAsync(
                     ContextBuilder.CreateTelegramState<TKey, TState>(botUserId, value));
             }

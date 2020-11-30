@@ -14,7 +14,7 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
     {
         private IStateService<int, ApplicationTgState> _stateService;
 
-        public override void Initialize(IServiceFactory factory, long chatId)
+        public override void Initialize(IServiceFactory factory, long telegramId)
         {
             _stateService = factory.CreateStateService<int, ApplicationTgState>(BotId);
         }

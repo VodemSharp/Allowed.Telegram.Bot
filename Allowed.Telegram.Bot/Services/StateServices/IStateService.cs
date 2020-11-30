@@ -9,8 +9,8 @@ namespace Allowed.Telegram.Bot.Services.StateServices
         where TState : TelegramState<TKey>
     {
         Task<TState> GetState(string username);
-        Task<TState> GetState(long chatId);
+        Task<TState> GetState(long telegramId);
         Task SetState(string username, string value);
-        Task SetState(long chatId, string value);
+        Task SetState(long telegramId, string value);
     }
 }

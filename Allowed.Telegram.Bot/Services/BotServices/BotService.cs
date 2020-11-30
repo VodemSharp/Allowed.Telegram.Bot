@@ -4,6 +4,7 @@ using Allowed.Telegram.Bot.Handlers.MessageHandlers;
 using Allowed.Telegram.Bot.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,13 +15,16 @@ namespace Allowed.Telegram.Bot.Services.BotServices
     public class BotService : BackgroundService
     {
         protected readonly ControllersCollection _controllersCollection;
+        protected readonly ILogger<BotService> _logger;
 
         public BotService(IServiceProvider services,
-            ControllersCollection controllersCollection)
+            ControllersCollection controllersCollection,
+            ILoggerFactory loggerFactory)
         {
             Services = services;
 
             _controllersCollection = controllersCollection;
+            _logger = loggerFactory.CreateLogger<BotService>();
         }
 
         protected IServiceProvider Services { get; }

@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -47,12 +46,12 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
             _logger = loggerFactory.CreateLogger<MessageHandler>();
         }
 
-        protected virtual Task<MethodInfo[]> GetAllowedMethods(long chatId)
+        protected virtual Task<MethodInfo[]> GetAllowedMethods(long telegramId)
         {
             return Task.FromResult(_controllerTypes.SelectMany(c => c.GetMethods()).ToArray());
         }
 
-        protected virtual Task<string> GetStateValue(long chatId = 0) => Task.FromResult(string.Empty);
+        protected virtual Task<string> GetStateValue(long telegramId = 0) => Task.FromResult(string.Empty);
 
         protected async Task<TelegramMethod> GetMethod(MethodType type, Message message)
         {
@@ -68,16 +67,6 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
 
                     if (method == null)
                         method = allowedMethods.FirstOrDefault(m => m.GetDefaultCommandAttributes().Any());
-
-                    break;
-
-                case MethodType.BySmile:
-
-                    method = allowedMethods
-                                .FirstOrDefault(m => m.GetEmojiCommandAttributes().Any(a => message.Text.StartsWith(a.GetSmile())));
-
-                    if (method == null)
-                        method = allowedMethods.FirstOrDefault(m => m.GetEmojiDefaultCommandAttributes().Any());
 
                     break;
 
@@ -261,8 +250,6 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 case MessageType.Text:
                     if (message.Text.StartsWith("/"))
                         return MethodType.ByPath;
-                    else if (EmojiHelper.IsStartEmoji(message.Text))
-                        return MethodType.BySmile;
                     else
                         return MethodType.Text;
                 default:
@@ -307,8 +294,8 @@ namespace Allowed.Telegram.Bot.Handlers.MessageHandlers
                 MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
                 if (messageMiddleware != null)
                 {
-                    messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.Message.From.Id);
-                    await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.Message.From.Id);
+                    messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.From.Id);
+                    await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.From.Id);
                 }
             }
             catch (Exception ex)

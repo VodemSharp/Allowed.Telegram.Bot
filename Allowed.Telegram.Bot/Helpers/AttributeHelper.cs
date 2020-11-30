@@ -41,16 +41,6 @@ namespace Allowed.Telegram.Bot.Helpers
             return (DefaultCommandAttribute[])method.GetCustomAttributes<DefaultCommandAttribute>(false);
         }
 
-        public static EmojiCommandAttribute[] GetEmojiCommandAttributes(this MethodInfo method)
-        {
-            return (EmojiCommandAttribute[])method.GetCustomAttributes<EmojiCommandAttribute>(false);
-        }
-
-        public static EmojiDefaultCommandAttribute[] GetEmojiDefaultCommandAttributes(this MethodInfo method)
-        {
-            return (EmojiDefaultCommandAttribute[])method.GetCustomAttributes<EmojiDefaultCommandAttribute>(false);
-        }
-
         public static TextCommandAttribute[] GetTextCommandAttributes(this MethodInfo method)
         {
             return (TextCommandAttribute[])method.GetCustomAttributes<TextCommandAttribute>(false);

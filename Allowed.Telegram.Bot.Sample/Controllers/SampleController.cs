@@ -14,7 +14,7 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
     {
         private IRoleService<int, ApplicationTgRole> _roleService;
 
-        public override void Initialize(IServiceFactory factory, long chatId)
+        public override void Initialize(IServiceFactory factory, long telegramId)
         {
             _roleService = factory.CreateRoleService<int, ApplicationTgRole>(BotId);
         }

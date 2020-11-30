@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.Services.UserServices
 {
@@ -9,18 +10,18 @@ namespace Allowed.Telegram.Bot.Services.UserServices
         where TKey : IEquatable<TKey>
         where TUser : TelegramUser<TKey>
     {
-        Task CheckUser(long chatId, string username);
+        Task CheckUser(User user);
 
         Task<List<TUser>> GetUsers();
         Task<int> CountUsers();
 
         Task<bool> AnyUser(string username);
-        Task<bool> AnyUser(long chatId);
+        Task<bool> AnyUser(long telegramId);
 
         Task<TUser> GetUser(string username);
-        Task<TUser> GetUser(long chatId);
+        Task<TUser> GetUser(long telegramId);
 
-        Task<TKey> GetBotUserId(long chatId);
+        Task<TKey> GetBotUserId(long telegramId);
         Task<TKey> GetBotUserId(string username);
 
         Task<List<TUser>> GetUsersByRole(string role);

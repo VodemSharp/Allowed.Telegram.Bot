@@ -36,8 +36,8 @@ namespace Allowed.Telegram.Bot.Models.Store.Context
             builder.Entity<TUser>().ToTable("TelegramUsers");
             builder.Entity<TUser>().HasKey(u => u.Id);
 
-            builder.Entity<TUser>().HasIndex(u => u.ChatId).IsUnique();
-            builder.Entity<TUser>().HasIndex(u => u.Username).IsUnique();
+            builder.Entity<TUser>().HasIndex(u => u.TelegramId);
+            builder.Entity<TUser>().HasIndex(u => u.Username);
 
             // TelegramRole
             builder.Entity<TRole>().ToTable("TelegramRoles");

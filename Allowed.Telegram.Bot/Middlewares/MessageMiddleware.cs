@@ -4,12 +4,12 @@ namespace Allowed.Telegram.Bot.Middlewares
 {
     public abstract class MessageMiddleware
     {
-        public Task AfterMessageProcessedAsync(long chatId) { return Task.CompletedTask; }
-        public Task AfterCallbackProcessedAsync(long chatId) { return Task.CompletedTask; }
-        public Task AfterInlineProcessedAsync(long chatId) { return Task.CompletedTask; }
+        public Task AfterMessageProcessedAsync(long telegramId) { return Task.CompletedTask; }
+        public Task AfterCallbackProcessedAsync(long telegramId) { return Task.CompletedTask; }
+        public Task AfterInlineProcessedAsync(long telegramId) { return Task.CompletedTask; }
 
-        public void AfterMessageProcessed(long chatId) { }
-        public void AfterCallbackProcessed(long chatId) { }
-        public void AfterInlineProcessed(long chatId) { }
+        public void AfterMessageProcessed(long telegramId) { }
+        public void AfterCallbackProcessed(long telegramId) { }
+        public void AfterInlineProcessed(long telegramId) { }
     }
 }

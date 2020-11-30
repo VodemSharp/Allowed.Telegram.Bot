@@ -26,5 +26,11 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         {
             await data.Client.SendAudioAsync(data.Message.Chat.Id, data.Message.Audio.FileId);
         }
+
+        [TypedCommand(MessageType.ChatMembersAdded)]
+        public async Task ChatMembersAdded(MessageData data)
+        {
+
+        }
     }
 }

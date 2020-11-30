@@ -11,12 +11,14 @@ using Allowed.Telegram.Bot.Services.StateServices;
 using Allowed.Telegram.Bot.Services.UserServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.Services.BotServices
 {
@@ -31,8 +33,9 @@ namespace Allowed.Telegram.Bot.Services.BotServices
         private readonly IServiceFactory _serviceFactory;
 
         public BotDbService(IServiceProvider services,
-            ControllersCollection controllersCollection)
-            : base(services, controllersCollection)
+            ControllersCollection controllersCollection,
+            ILoggerFactory loggerFactory)
+            : base(services, controllersCollection, loggerFactory)
         {
             _serviceFactory = (IServiceFactory)services.GetService(typeof(IServiceFactory));
         }
@@ -85,57 +88,85 @@ namespace Allowed.Telegram.Bot.Services.BotServices
 
         protected override async Task DoWork(CancellationToken stoppingToken)
         {
-            ClientsCollection clientsCollection = Services.GetService<ClientsCollection>();
-            Dictionary<string, TKey> bots =
-                await InitializeBots(clientsCollection.Clients.Select(c => c.BotData.Name));
-
-            foreach (ClientItem client in clientsCollection.Clients)
+            try
             {
-                TKey botId = bots.GetValueOrDefault(client.BotData.Name);
+                ClientsCollection clientsCollection = Services.GetService<ClientsCollection>();
+                Dictionary<string, TKey> bots =
+                    await InitializeBots(clientsCollection.Clients.Select(c => c.BotData.Name));
 
-                client.Client.OnMessage += async (a, b) =>
+                foreach (ClientItem client in clientsCollection.Clients)
                 {
-                    IUserService<TKey, TUser> userService = GetUserService(botId);
-                    IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-                    IStateService<TKey, TState> stateService = GetStateService(botId);
+                    TKey botId = bots.GetValueOrDefault(client.BotData.Name);
 
-                    MessageDbHandler<TKey, TRole, TState> messageHandler =
-                        GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+                    client.Client.OnMessage += async (a, b) =>
+                    {
+                        try
+                        {
+                            IUserService<TKey, TUser> userService = GetUserService(botId);
+                            IRoleService<TKey, TRole> roleService = GetRoleService(botId);
+                            IStateService<TKey, TState> stateService = GetStateService(botId);
 
-                    await userService.CheckUser(b.Message.From.Id, b.Message.From.Username);
-                    await messageHandler.OnMessage(b, botId);
-                };
+                            MessageDbHandler<TKey, TRole, TState> messageHandler =
+                                GetMessageHandler(roleService, stateService, client.Client, client.BotData);
 
-                client.Client.OnCallbackQuery += async (a, b) =>
-                {
-                    IUserService<TKey, TUser> userService = GetUserService(botId);
-                    IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-                    IStateService<TKey, TState> stateService = GetStateService(botId);
+                            await userService.CheckUser(b.Message.From);
+                            await messageHandler.OnMessage(b, botId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.ToString());
+                        }
+                    };
 
-                    MessageDbHandler<TKey, TRole, TState> messageHandler =
-                        GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+                    client.Client.OnCallbackQuery += async (a, b) =>
+                    {
+                        try
+                        {
+                            IUserService<TKey, TUser> userService = GetUserService(botId);
+                            IRoleService<TKey, TRole> roleService = GetRoleService(botId);
+                            IStateService<TKey, TState> stateService = GetStateService(botId);
 
-                    await userService.CheckUser(b.CallbackQuery.Message.From.Id, b.CallbackQuery.Message.From.Username);
-                    await messageHandler.OnCallbackQuery(b, botId);
-                };
+                            MessageDbHandler<TKey, TRole, TState> messageHandler =
+                                GetMessageHandler(roleService, stateService, client.Client, client.BotData);
 
-                client.Client.OnInlineQuery += async (a, b) =>
-                {
-                    IUserService<TKey, TUser> userService = GetUserService(botId);
-                    IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-                    IStateService<TKey, TState> stateService = GetStateService(botId);
+                            await userService.CheckUser(b.CallbackQuery.From);
+                            await messageHandler.OnCallbackQuery(b, botId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.ToString());
+                        }
+                    };
 
-                    MessageDbHandler<TKey, TRole, TState> messageHandler =
-                        GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+                    client.Client.OnInlineQuery += async (a, b) =>
+                    {
+                        try
+                        {
+                            IUserService<TKey, TUser> userService = GetUserService(botId);
+                            IRoleService<TKey, TRole> roleService = GetRoleService(botId);
+                            IStateService<TKey, TState> stateService = GetStateService(botId);
 
-                    await userService.CheckUser(b.InlineQuery.From.Id, b.InlineQuery.From.Username);
-                    await messageHandler.OnInlineQuery(b, botId);
-                };
+                            MessageDbHandler<TKey, TRole, TState> messageHandler =
+                                GetMessageHandler(roleService, stateService, client.Client, client.BotData);
 
-                client.Client.StartReceiving();
+                            await userService.CheckUser(b.InlineQuery.From);
+                            await messageHandler.OnInlineQuery(b, botId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.ToString());
+                        }
+                    };
+
+                    client.Client.StartReceiving();
+                }
+
+                await Task.Delay(Timeout.Infinite);
             }
-
-            await Task.Delay(Timeout.Infinite);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+            }
         }
     }
 }

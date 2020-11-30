@@ -15,11 +15,15 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
         Task UpdateRole(TRole role);
         Task RemoveRole(TRole role);
 
-        Task<bool> AnyUserRole(long chatId, string role);
-        Task AddUserRole(long chatId, string role);
-        Task RemoveUserRole(long chatId, string role);
+        Task<bool> AnyUserRole(long telegramId, string role);
+        Task AddUserRole(long telegramId, string role);
+        Task RemoveUserRole(long telegramId, string role);
 
-        Task<List<TRole>> GetUserRoles(long chatId);
+        Task<bool> AnyUserRole(string username, string role);
+        Task AddUserRole(string username, string role);
+        Task RemoveUserRole(string username, string role);
+
+        Task<List<TRole>> GetUserRoles(long telegramId);
         Task<List<TRole>> GetUserRoles(string username);
     }
 }

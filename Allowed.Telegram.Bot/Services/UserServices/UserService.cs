@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.Services.UserServices
 {
@@ -23,14 +24,18 @@ namespace Allowed.Telegram.Bot.Services.UserServices
             _botId = botId;
         }
 
-        public async Task CheckUser(long chatId, string username)
+        public async Task CheckUser(User telegramUser)
         {
-            TUser user = await GetTelegramUser(chatId);
+            TUser user = await GetTelegramUser(telegramUser.Id);
+
+            if (user == null && !string.IsNullOrEmpty(telegramUser.Username))
+                user = await GetTelegramUser(telegramUser.Username);
 
             // If user does't use one of bots in db
             if (user == null)
             {
-                user = ContextBuilder.CreateTelegramUser<TKey, TUser>(chatId, username);
+                user = ContextBuilder.CreateTelegramUser<TKey, TUser>(telegramUser.Id, telegramUser.Username,
+                    telegramUser.FirstName, telegramUser.LastName, telegramUser.LanguageCode);
 
                 await _db.Set<TUser>().AddAsync(user);
                 await _db.SaveChangesAsync();
@@ -51,18 +56,28 @@ namespace Allowed.Telegram.Bot.Services.UserServices
             }
 
             // If user set username after starting bot
-            if (username != user.Username)
+            if (telegramUser.Username != user.Username || telegramUser.Id != user.TelegramId || telegramUser.FirstName != user.FirstName
+                || telegramUser.LastName != user.LastName || telegramUser.LanguageCode != user.LanguageCode)
             {
-                user.Username = username;
+                user.Username = telegramUser.Username;
+                user.TelegramId = telegramUser.Id;
+                user.FirstName = telegramUser.FirstName;
+                user.LastName = telegramUser.LastName;
+                user.LanguageCode = telegramUser.LanguageCode;
 
                 _db.Set<TUser>().Update(user);
                 await _db.SaveChangesAsync();
             }
         }
 
-        private async Task<TUser> GetTelegramUser(long chatId)
+        private async Task<TUser> GetTelegramUser(long telegramId)
         {
-            return await _db.Set<TUser>().FirstOrDefaultAsync(u => u.ChatId == chatId);
+            return await _db.Set<TUser>().FirstOrDefaultAsync(u => u.TelegramId == telegramId);
+        }
+
+        private async Task<TUser> GetTelegramUser(string username)
+        {
+            return await _db.Set<TUser>().FirstOrDefaultAsync(u => u.Username == username);
         }
 
         public async Task<List<TUser>> GetUsers()
@@ -85,13 +100,13 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                 .CountAsync();
         }
 
-        public async Task<bool> AnyUser(long chatId)
+        public async Task<bool> AnyUser(long telegramId)
         {
             return await _db.Set<TUser>().FromSqlRaw(
                   "SELECT t2.* "
                 + "FROM TelegramBotUsers AS t1 "
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} AND t2.ChatId = {chatId} "
+                + $"WHERE t1.TelegramBotId = {_botId} AND t2.TelegramId = {telegramId} "
                 + "LIMIT 1").AnyAsync();
         }
 
@@ -109,13 +124,13 @@ namespace Allowed.Telegram.Bot.Services.UserServices
         }
 
 
-        public async Task<TUser> GetUser(long chatId)
+        public async Task<TUser> GetUser(long telegramId)
         {
             return await _db.Set<TUser>().FromSqlRaw(
                   "SELECT t2.* "
                 + "FROM TelegramBotUsers AS t1 "
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} AND t2.ChatId = {chatId} "
+                + $"WHERE t1.TelegramBotId = {_botId} AND t2.TelegramId = {telegramId} "
                 + "LIMIT 1").FirstOrDefaultAsync();
         }
 
@@ -132,9 +147,9 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                 + "LIMIT 1").FirstOrDefaultAsync();
         }
 
-        public async Task<TKey> GetBotUserId(long chatId)
+        public async Task<TKey> GetBotUserId(long telegramId)
         {
-            return await _db.GetBotUserId(_botId, chatId);
+            return await _db.GetBotUserId(_botId, telegramId);
         }
 
         public async Task<TKey> GetBotUserId(string username)

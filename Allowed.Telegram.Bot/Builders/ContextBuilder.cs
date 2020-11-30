@@ -5,14 +5,18 @@ namespace Allowed.Telegram.Bot.Builders
 {
     public static class ContextBuilder
     {
-        public static TUser CreateTelegramUser<TKey, TUser>(long chatId, string username)
+        public static TUser CreateTelegramUser<TKey, TUser>(long telegramId, string username,
+                string firstName, string lastName, string languageCode)
             where TKey : IEquatable<TKey>
             where TUser : TelegramUser<TKey>
         {
             TUser user = Activator.CreateInstance<TUser>();
 
-            user.ChatId = chatId;
+            user.TelegramId = telegramId;
             user.Username = username;
+            user.FirstName = firstName;
+            user.LastName = lastName;
+            user.LanguageCode = languageCode;
 
             return user;
         }

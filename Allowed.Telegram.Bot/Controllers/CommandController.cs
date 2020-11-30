@@ -9,7 +9,7 @@ namespace Allowed.Telegram.Bot.Controllers
     {
         public TKey BotId { get; set; }
 
-        public virtual void Initialize(IServiceFactory factory, long chatId) { }
-        public virtual Task InitializeAsync(IServiceFactory factory, long chatId) { return Task.CompletedTask; }
+        public virtual void Initialize(IServiceFactory factory, long telegramId) { }
+        public virtual Task InitializeAsync(IServiceFactory factory, long telegramId) { return Task.CompletedTask; }
     }
 }

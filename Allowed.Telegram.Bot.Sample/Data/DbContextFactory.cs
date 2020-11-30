@@ -10,7 +10,7 @@ namespace Allowed.Telegram.Bot.Sample.Data
         {
             var dbContextBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-            dbContextBuilder.UseMySql(AllowedConstants.DbConnection);
+            dbContextBuilder.UseMySql(AllowedConstants.DbConnection, ServerVersion.AutoDetect(AllowedConstants.DbConnection));
 
             return new ApplicationDbContext(dbContextBuilder.Options);
         }

@@ -10,8 +10,5 @@ namespace Allowed.Telegram.Bot.Tests.Controllers
 
         [TextCommand]
         public string TextCommand() => "DC2";
-
-        [EmojiDefaultCommand]
-        public string EmojiDefaultCommand() => "DC3";
     }
 }

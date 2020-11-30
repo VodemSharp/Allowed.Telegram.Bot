@@ -20,7 +20,8 @@ namespace Allowed.Telegram.Bot.Sample
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(AllowedConstants.DbConnection),
+            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(
+                AllowedConstants.DbConnection, ServerVersion.AutoDetect(AllowedConstants.DbConnection)),
                 ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             //services.AddTelegramClients(new BotData[] {

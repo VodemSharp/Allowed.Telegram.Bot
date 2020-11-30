@@ -2,6 +2,6 @@
 {
     public enum MethodType
     {
-        ByPath, BySmile, ByType, Text, Inline, Callback
+        ByPath, ByType, Text, Inline, Callback, Update
     }
 }
