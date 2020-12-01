@@ -78,7 +78,7 @@ namespace Allowed.Telegram.Bot.Services.BotServices
                         await db.SaveChangesAsync();
                     }
 
-                    result.Add(botName, (await db.Set<TBot>()
+                    result.Add(botName, (await db.Set<TBot>().OrderBy(b => b.Id)
                         .FirstOrDefaultAsync(b => b.Name == botName)).Id);
                 }
             }
@@ -163,7 +163,7 @@ namespace Allowed.Telegram.Bot.Services.BotServices
 
                 await Task.Delay(Timeout.Infinite);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
             }

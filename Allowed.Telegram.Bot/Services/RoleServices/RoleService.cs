@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Services.RoleServices
@@ -79,7 +80,7 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
         public async Task AddUserRole(long telegramId, string role)
         {
             TKey botUserId = await _db.GetBotUserId(_botId, telegramId);
-            TKey roleId = (await _db.Set<TRole>().FirstAsync(r => r.Name == role)).Id;
+            TKey roleId = (await _db.Set<TRole>().OrderBy(r => r.Id).FirstAsync(r => r.Name == role)).Id;
 
             await _db.AddAsync(ContextBuilder.CreateTelegramBotUserRole(_options.BotUserRoleType, botUserId, roleId));
             await _db.SaveChangesAsync();
@@ -88,7 +89,7 @@ namespace Allowed.Telegram.Bot.Services.RoleServices
         public async Task AddUserRole(string username, string role)
         {
             TKey botUserId = await _db.GetBotUserId(_botId, username);
-            TKey roleId = (await _db.Set<TRole>().FirstAsync(r => r.Name == role)).Id;
+            TKey roleId = (await _db.Set<TRole>().OrderBy(r => r.Id).FirstAsync(r => r.Name == role)).Id;
 
             await _db.AddAsync(ContextBuilder.CreateTelegramBotUserRole(_options.BotUserRoleType, botUserId, roleId));
             await _db.SaveChangesAsync();

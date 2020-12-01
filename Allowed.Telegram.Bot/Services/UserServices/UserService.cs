@@ -4,6 +4,7 @@ using Allowed.Telegram.Bot.Options;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
@@ -72,12 +73,12 @@ namespace Allowed.Telegram.Bot.Services.UserServices
 
         private async Task<TUser> GetTelegramUser(long telegramId)
         {
-            return await _db.Set<TUser>().FirstOrDefaultAsync(u => u.TelegramId == telegramId);
+            return await _db.Set<TUser>().OrderBy(u => u.Id).FirstOrDefaultAsync(u => u.TelegramId == telegramId);
         }
 
         private async Task<TUser> GetTelegramUser(string username)
         {
-            return await _db.Set<TUser>().FirstOrDefaultAsync(u => u.Username == username);
+            return await _db.Set<TUser>().OrderBy(u => u.Id).FirstOrDefaultAsync(u => u.Username == username);
         }
 
         public async Task<List<TUser>> GetUsers()
@@ -131,7 +132,7 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                 + "FROM TelegramBotUsers AS t1 "
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
                 + $"WHERE t1.TelegramBotId = {_botId} AND t2.TelegramId = {telegramId} "
-                + "LIMIT 1").FirstOrDefaultAsync();
+                + "LIMIT 1").OrderBy(u => u.Id).FirstOrDefaultAsync();
         }
 
         public async Task<TUser> GetUser(string username)
@@ -144,7 +145,7 @@ namespace Allowed.Telegram.Bot.Services.UserServices
                 + "FROM TelegramBotUsers AS t1 "
                 + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
                 + $"WHERE t1.TelegramBotId = {_botId} AND t2.Username = '{username}' "
-                + "LIMIT 1").FirstOrDefaultAsync();
+                + "LIMIT 1").OrderBy(u => u.Id).FirstOrDefaultAsync();
         }
 
         public async Task<TKey> GetBotUserId(long telegramId)

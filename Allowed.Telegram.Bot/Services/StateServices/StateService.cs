@@ -4,6 +4,7 @@ using Allowed.Telegram.Bot.Options;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Services.StateServices
@@ -29,7 +30,7 @@ namespace Allowed.Telegram.Bot.Services.StateServices
               + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
               + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
               + $"WHERE t3.Username = '{username}' AND t2.TelegramBotId = {_botId} "
-              + "LIMIT 1").FirstOrDefaultAsync();
+              + "LIMIT 1").OrderBy(s => s.Id).FirstOrDefaultAsync();
         }
 
         public async Task<TState> GetState(long telegramId)
@@ -40,7 +41,7 @@ namespace Allowed.Telegram.Bot.Services.StateServices
               + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
               + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
               + $"WHERE t3.TelegramId = {telegramId} AND t2.TelegramBotId = {_botId} "
-              + "LIMIT 1").FirstOrDefaultAsync();
+              + "LIMIT 1").OrderBy(s => s.Id).FirstOrDefaultAsync();
         }
 
         public async Task SetState(string username, string value)

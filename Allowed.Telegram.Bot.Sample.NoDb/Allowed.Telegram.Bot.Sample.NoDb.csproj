@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>db41fc10-e333-4410-96c0-f268af2c82d8</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj" />
+  </ItemGroup>
 
 </Project>
