@@ -2,15 +2,18 @@
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
+    "iis": {
+      "applicationUrl": "http://localhost/Allowed.Telegram.Bot.Sample.NoDb",
+      "sslPort": 0
+    },
     "iisExpress": {
-      "applicationUrl": "http://localhost:56259",
-      "sslPort": 44354
+      "applicationUrl": "http://localhost:45395",
+      "sslPort": 0
     }
   },
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

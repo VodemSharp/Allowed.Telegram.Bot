@@ -17,11 +17,8 @@ namespace Allowed.Telegram.Bot.Sample.NoDb
 
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.AddTelegramClients(new BotData[] {
-            //        //new BotData { Token = "<token>", Name = "Sample" },
-            //    })
-
-            services.AddTelegramClients(Configuration.GetSection("Telegram:Bots").Get<BotData[]>());
+            services.AddTelegramClients(Configuration.GetSection("Telegram:Bots").Get<BotData[]>())
+                    .AddTelegramManager();
         }
 
         public void Configure(IApplicationBuilder app)

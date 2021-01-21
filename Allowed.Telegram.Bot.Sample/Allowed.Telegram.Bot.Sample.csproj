@@ -6,11 +6,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="5.0.0-alpha.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Allowed.Telegram.Bot.Data\Allowed.Telegram.Bot.Data.csproj" />
+    <ProjectReference Include="..\Allowed.Telegram.Bot.EntityFrameworkCore\Allowed.Telegram.Bot.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj" />
   </ItemGroup>
 
 </Project>

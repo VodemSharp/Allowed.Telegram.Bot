@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers
 {
-    public class SampleController : CommandController<int>
+    public class SampleController : CommandController
     {
         [Command("start")]
         public async Task Start(MessageData data)

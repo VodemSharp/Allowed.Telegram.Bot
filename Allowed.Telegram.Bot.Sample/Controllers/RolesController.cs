@@ -1,5 +1,6 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
-using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Data.Attributes;
+using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Models;
 using System.Threading.Tasks;
 

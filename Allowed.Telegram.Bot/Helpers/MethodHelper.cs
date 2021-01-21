@@ -1,5 +1,4 @@
-﻿using Allowed.Telegram.Bot.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;

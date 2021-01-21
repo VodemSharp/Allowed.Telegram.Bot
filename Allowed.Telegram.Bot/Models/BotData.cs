@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Allowed.Telegram.Bot.Models
+﻿namespace Allowed.Telegram.Bot.Models
 {
     public class BotData
     {

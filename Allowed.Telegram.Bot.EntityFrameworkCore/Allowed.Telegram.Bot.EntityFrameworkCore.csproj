@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Authors>VodemSharp</Authors>
+    <Company>Allowed Inc.</Company>
+    <Product>AllowedSharp</Product>
+    <Description>User account control system for Allowed.Telegram.Bot based on Entity Framework Core.</Description>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Allowed.Telegram.Bot.Data\Allowed.Telegram.Bot.Data.csproj" />
+    <ProjectReference Include="..\Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Images\icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

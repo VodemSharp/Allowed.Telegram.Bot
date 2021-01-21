@@ -1,9 +1,9 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
-using Allowed.Telegram.Bot.Controllers;
-using Allowed.Telegram.Bot.Data.DbModels.Allowed;
-using Allowed.Telegram.Bot.Factories.ServiceFactories;
+using Allowed.Telegram.Bot.Data.Controllers;
+using Allowed.Telegram.Bot.Data.Factories;
+using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Services.RoleServices;
+using Allowed.Telegram.Bot.Sample.DbModels.Allowed;
 using System;
 using System.Threading.Tasks;
 

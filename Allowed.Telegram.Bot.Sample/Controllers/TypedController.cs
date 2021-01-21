@@ -1,6 +1,7 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
-using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Models;
+using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.Enums;
 
@@ -28,9 +29,9 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         }
 
         [TypedCommand(MessageType.ChatMembersAdded)]
-        public async Task ChatMembersAdded(MessageData data)
+        public Task ChatMembersAdded(MessageData data)
         {
-
+            throw new NotImplementedException();
         }
     }
 }

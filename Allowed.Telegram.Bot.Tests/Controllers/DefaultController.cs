@@ -3,7 +3,7 @@ using Allowed.Telegram.Bot.Controllers;
 
 namespace Allowed.Telegram.Bot.Tests.Controllers
 {
-    public class DefaultController : CommandController<int>
+    public class DefaultController : CommandController
     {
         [DefaultCommand]
         public string DefaultCommand() => "DC1";

@@ -1,7 +1,6 @@
 ﻿using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Extensions.Collections;
-using Allowed.Telegram.Bot.Handlers.MessageHandlers;
-using Allowed.Telegram.Bot.Models.Store;
+using Allowed.Telegram.Bot.Handlers;
 using Allowed.Telegram.Bot.Tests.Factories;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -15,19 +14,15 @@ namespace Allowed.Telegram.Bot.Tests
         private static MessageHandler MessageHandler { get; set; }
         private static MessageFactory MessageFactory { get; set; }
 
-        private static TestContext _testContext;
-
         [ClassInitialize]
         public static void Initialize(TestContext testContext)
         {
-            _testContext = testContext;
-
             ControllersCollection controllersCollection =
                 new ControllersCollection
                 {
                     ControllerTypes = AppDomain.CurrentDomain.GetAssemblies()
                         .SelectMany(s => s.GetTypes())
-                        .Where(p => p.IsSubclassOf(typeof(CommandController<>))).ToList()
+                        .Where(p => p.IsSubclassOf(typeof(CommandController))).ToList()
                 };
 
             MessageHandler = new MessageHandler(controllersCollection, null, null, null);

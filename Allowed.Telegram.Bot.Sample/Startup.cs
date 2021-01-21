@@ -1,7 +1,7 @@
-using Allowed.Telegram.Bot.Data.Constants;
+using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions;
 using Allowed.Telegram.Bot.Extensions;
 using Allowed.Telegram.Bot.Models;
-using Allowed.Telegram.Bot.Sample.Data;
+using Allowed.Telegram.Bot.Sample.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,18 +20,13 @@ namespace Allowed.Telegram.Bot.Sample
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(
-                AllowedConstants.DbConnection, ServerVersion.AutoDetect(AllowedConstants.DbConnection)),
+            string connection = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(connection, ServerVersion.AutoDetect(connection)),
                 ServiceLifetime.Transient, ServiceLifetime.Transient);
 
-            //services.AddTelegramClients(new BotData[] {
-            //        //new BotData { Token = "<token>", Name = "Sample" },
-            //        //new BotData { Token = "<token2>", Name = "Sample2" },
-            //    })
-            //    .AddTelegramStore<ApplicationDbContext>();
-
             services.AddTelegramClients(Configuration.GetSection("Telegram:Bots").Get<BotData[]>())
-                .AddTelegramStore<ApplicationDbContext>();
+                .AddTelegramStore<ApplicationDbContext>()
+                .AddTelegramDbManager();
         }
 
         public void Configure(IApplicationBuilder app)
