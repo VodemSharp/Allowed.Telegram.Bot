@@ -2,10 +2,24 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <PackageId>Allowed.Telegram.Bot.Data</PackageId>
+    <Authors>VodemSharp</Authors>
+    <Company>Allowed Inc.</Company>
+    <Product>AllowedSharp</Product>
+    <Description>Models for Allowed.Telegram.Bot user account control system.</Description>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Telegram.Bot" Version="15.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Images\icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

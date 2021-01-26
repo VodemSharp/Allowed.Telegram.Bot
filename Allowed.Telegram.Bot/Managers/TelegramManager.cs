@@ -29,10 +29,9 @@ namespace Allowed.Telegram.Bot.Managers
 
         protected IServiceProvider Services { get; }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _ = DoWork(stoppingToken);
-            return Task.CompletedTask;
+            await DoWork(stoppingToken);
         }
 
         private MessageHandler GetMessageHandler(ITelegramBotClient client, BotData botData)

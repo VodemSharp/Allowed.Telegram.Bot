@@ -25,7 +25,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Extensions
                         }).ToList()
                 });
 
-            services.AddSingleton((IServiceProvider provider) =>
+            services.AddHostedService((IServiceProvider provider) =>
             {
                 ContextOptions options = provider.GetService<ContextOptions>();
 

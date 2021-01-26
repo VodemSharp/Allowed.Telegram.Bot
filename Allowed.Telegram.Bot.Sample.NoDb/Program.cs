@@ -1,4 +1,6 @@
-using Microsoft.AspNetCore.Hosting;
+using Allowed.Telegram.Bot.Extensions;
+using Allowed.Telegram.Bot.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Allowed.Telegram.Bot.Sample.NoDb
@@ -12,9 +14,13 @@ namespace Allowed.Telegram.Bot.Sample.NoDb
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
+                .UseWindowsService()
+                .ConfigureServices((hostContext, services) =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    IConfiguration config = hostContext.Configuration;
+
+                    services.AddTelegramClients(config.GetSection("Telegram:Bots").Get<BotData[]>())
+                            .AddTelegramManager();
                 });
     }
 }

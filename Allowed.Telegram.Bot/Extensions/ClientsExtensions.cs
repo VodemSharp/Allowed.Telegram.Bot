@@ -3,12 +3,10 @@ using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Extensions.Collections.Items;
 using Allowed.Telegram.Bot.Managers;
 using Allowed.Telegram.Bot.Models;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Telegram.Bot;
 
 namespace Allowed.Telegram.Bot.Extensions
@@ -33,25 +31,16 @@ namespace Allowed.Telegram.Bot.Extensions
                 new ControllersCollection
                 {
                     ControllerTypes = AppDomain.CurrentDomain.GetAssemblies()
-                        .SelectMany(s => s.GetTypes())
-                        .Where(p =>
-                        {
-                            return p.IsSubclassOf(typeof(CommandController));
-                        }).ToList()
+                            .SelectMany(s => s.GetTypes())
+                            .Where(p =>
+                            {
+                                return p.IsSubclassOf(typeof(CommandController));
+                            }).ToList()
                 });
 
-            services.AddSingleton<TelegramManager>();
+            services.AddHostedService<TelegramManager>();
 
             return services;
-        }
-
-        public static IApplicationBuilder UseTelegramBots(this IApplicationBuilder app)
-        {
-            IServiceProvider provider = app.ApplicationServices;
-
-            provider.GetService<TelegramManager>().StartAsync(new CancellationToken());
-
-            return app;
         }
     }
 }

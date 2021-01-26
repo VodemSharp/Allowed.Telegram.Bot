@@ -1,26 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <UserSecretsId>c06f4d70-4629-4c01-9fd4-4b17649e633e</UserSecretsId>
+    <UserSecretsId>dotnet-Allowed.Telegram.Bot.Sample-1ECF020C-229E-47BC-BB48-065FB12D0FB0</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="5.0.0-alpha.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Allowed.Telegram.Bot.Data\Allowed.Telegram.Bot.Data.csproj" />
     <ProjectReference Include="..\Allowed.Telegram.Bot.EntityFrameworkCore\Allowed.Telegram.Bot.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj" />
   </ItemGroup>
-
 </Project>
