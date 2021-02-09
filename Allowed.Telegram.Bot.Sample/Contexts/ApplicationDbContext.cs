@@ -42,7 +42,7 @@ namespace Allowed.Telegram.Bot.Sample.Contexts
                 var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
                 string connection = config.GetConnectionString("DefaultConnection");
 
-                builder.UseMySql(connection, ServerVersion.AutoDetect(connection));
+                builder.UseNpgsql(connection);
 
                 return new ApplicationDbContext(builder.Options);
             }

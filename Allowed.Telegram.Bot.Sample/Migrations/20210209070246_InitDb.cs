@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Allowed.Telegram.Bot.Sample.Migrations
 {
@@ -11,9 +11,9 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "TelegramBots",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -24,9 +24,9 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "TelegramRoles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -37,13 +37,13 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "TelegramUsers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TelegramId = table.Column<long>(type: "bigint", nullable: false),
-                    Username = table.Column<string>(type: "varchar(255) CHARACTER SET utf8mb4", nullable: true),
-                    FirstName = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true),
-                    LastName = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true),
-                    LanguageCode = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true)
+                    Username = table.Column<string>(type: "text", nullable: true),
+                    FirstName = table.Column<string>(type: "text", nullable: true),
+                    LastName = table.Column<string>(type: "text", nullable: true),
+                    LanguageCode = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -54,10 +54,10 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "TelegramBotUsers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    TelegramUserId = table.Column<int>(type: "int", nullable: false),
-                    TelegramBotId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TelegramUserId = table.Column<int>(type: "integer", nullable: false),
+                    TelegramBotId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -80,11 +80,11 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "UserFiles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    TelegramUserId = table.Column<int>(type: "int", nullable: false),
-                    Type = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true),
-                    Value = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TelegramUserId = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: true),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -101,8 +101,8 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "TelegramBotUserRoles",
                 columns: table => new
                 {
-                    TelegramBotUserId = table.Column<int>(type: "int", nullable: false),
-                    TelegramRoleId = table.Column<int>(type: "int", nullable: false)
+                    TelegramBotUserId = table.Column<int>(type: "integer", nullable: false),
+                    TelegramRoleId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -125,10 +125,10 @@ namespace Allowed.Telegram.Bot.Sample.Migrations
                 name: "TelegramStates",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    TelegramBotUserId = table.Column<int>(type: "int", nullable: false),
-                    Value = table.Column<string>(type: "longtext CHARACTER SET utf8mb4", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TelegramBotUserId = table.Column<int>(type: "integer", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

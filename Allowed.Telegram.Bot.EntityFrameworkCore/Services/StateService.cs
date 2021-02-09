@@ -2,6 +2,7 @@
 using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Builders;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions;
+using Allowed.Telegram.Bot.EntityFrameworkCore.Helpers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -15,35 +16,43 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
         where TKey : IEquatable<TKey>
         where TState : TelegramState<TKey>
     {
+        private readonly LinqHelper _linqHelper;
         private readonly DbContext _db;
         private readonly TKey _botId;
+
+        private readonly IQueryable<TelegramUser<TKey>> _users;
+        private readonly IQueryable<TelegramBotUser<TKey>> _botUsers;
+        private readonly IQueryable<TelegramState<TKey>> _states;
 
         public StateService(IServiceProvider provider, ContextOptions options, TKey botId)
         {
             _db = (DbContext)provider.GetService(options.ContextType);
             _botId = botId;
+            _linqHelper = new LinqHelper();
+
+            _users = _db.Set(options.UserType).Cast<TelegramUser<TKey>>();
+            _botUsers = _db.Set(options.BotUserType).Cast<TelegramBotUser<TKey>>();
+            _states = _db.Set(options.StateType).Cast<TelegramState<TKey>>();
         }
 
         public async Task<TState> GetState(string username)
         {
-            return await _db.Set<TState>().FromSqlRaw(
-                "SELECT t1.* "
-              + "FROM ((TelegramStates AS t1 "
-              + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
-              + $"WHERE t3.Username = '{username}' AND t2.TelegramBotId = {_botId} "
-              + "LIMIT 1").OrderBy(s => s.Id).FirstOrDefaultAsync();
+            return await (from s in _states
+                          join bu in _botUsers on s.TelegramBotUserId equals bu.Id
+                          join u in _users on bu.TelegramUserId equals u.Id
+                          where u.Username == username && bu.TelegramBotId.Equals(_botId)
+                          select s)
+                    .Cast<TState>().FirstOrDefaultAsync();
         }
 
         public async Task<TState> GetState(long telegramId)
         {
-            return await _db.Set<TState>().FromSqlRaw(
-                "SELECT t1.* "
-              + "FROM ((TelegramStates AS t1 "
-              + "INNER JOIN TelegramBotUsers AS t2 ON t2.Id = t1.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers AS t3 ON t3.Id = t2.TelegramUserId) "
-              + $"WHERE t3.TelegramId = {telegramId} AND t2.TelegramBotId = {_botId} "
-              + "LIMIT 1").OrderBy(s => s.Id).FirstOrDefaultAsync();
+            return await (from s in _states
+                          join bu in _botUsers on s.TelegramBotUserId equals bu.Id
+                          join u in _users on bu.TelegramUserId equals u.Id
+                          where u.TelegramId == telegramId && bu.TelegramBotId.Equals(_botId)
+                          select s)
+                    .Cast<TState>().FirstOrDefaultAsync();
         }
 
         public async Task SetState(string username, string value)
@@ -52,7 +61,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
 
             if (state == null)
             {
-                TKey botUserId = await _db.GetBotUserId(_botId, username);
+                TKey botUserId = await _linqHelper.GetBotUserId(_users, _botUsers, _botId, username);
                 await _db.Set<TState>().AddAsync(
                     ContextBuilder.CreateTelegramState<TKey, TState>(botUserId, value));
             }
@@ -71,7 +80,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
 
             if (state == null)
             {
-                TKey botUserId = await _db.GetBotUserId(_botId, telegramId);
+                TKey botUserId = await _linqHelper.GetBotUserId(_users, _botUsers, _botId, telegramId);
                 await _db.Set<TState>().AddAsync(
                     ContextBuilder.CreateTelegramState<TKey, TState>(botUserId, value));
             }

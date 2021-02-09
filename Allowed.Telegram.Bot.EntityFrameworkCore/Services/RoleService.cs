@@ -2,6 +2,7 @@
 using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Builders;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions;
+using Allowed.Telegram.Bot.EntityFrameworkCore.Helpers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,15 +17,27 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
         where TKey : IEquatable<TKey>
         where TRole : TelegramRole<TKey>
     {
+        private readonly LinqHelper _linqHelper;
         private readonly ContextOptions _options;
         private readonly DbContext _db;
         private readonly TKey _botId;
+
+        private readonly IQueryable<TelegramBotUserRole<TKey>> _userRoles;
+        private readonly IQueryable<TelegramRole<TKey>> _roles;
+        private readonly IQueryable<TelegramUser<TKey>> _users;
+        private readonly IQueryable<TelegramBotUser<TKey>> _botUsers;
 
         public RoleService(IServiceProvider provider, ContextOptions options, TKey botId)
         {
             _db = (DbContext)provider.GetService(options.ContextType);
             _options = options;
             _botId = botId;
+            _linqHelper = new LinqHelper();
+
+            _userRoles = _db.Set(_options.BotUserRoleType).Cast<TelegramBotUserRole<TKey>>();
+            _roles = _db.Set(_options.RoleType).Cast<TelegramRole<TKey>>();
+            _users = _db.Set(_options.UserType).Cast<TelegramUser<TKey>>();
+            _botUsers = _db.Set(_options.BotUserType).Cast<TelegramBotUser<TKey>>();
         }
 
         public async Task<bool> AnyRole(string role)
@@ -57,31 +70,29 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
 
         public async Task<bool> AnyUserRole(long telegramId, string role)
         {
-            return await _db.Set<TRole>().FromSqlRaw(
-                "SELECT t1.* "
-              + "FROM (((TelegramRoles AS t1 "
-              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
-              + $"WHERE t4.TelegramId = {telegramId} AND t3.TelegramBotId = {_botId} AND t1.Name = '{role}' "
-              + "LIMIT 1").AnyAsync();
+            return await (from r in _roles
+                          join ur in _userRoles on r.Id equals ur.TelegramRoleId
+                          join bu in _botUsers on ur.TelegramBotUserId equals bu.Id
+                          join u in _users on bu.TelegramUserId equals u.Id
+                          where u.TelegramId == telegramId && bu.TelegramBotId.Equals(_botId) && r.Name == role
+                          select r)
+                  .AnyAsync();
         }
 
         public async Task<bool> AnyUserRole(string username, string role)
         {
-            return await _db.Set<TRole>().FromSqlRaw(
-                "SELECT t1.* "
-              + "FROM (((TelegramRoles AS t1 "
-              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
-              + $"WHERE t4.Username = '{username}' AND t3.TelegramBotId = {_botId} AND t1.Name = '{role}' "
-              + "LIMIT 1").AnyAsync();
+            return await (from r in _roles
+                          join ur in _userRoles on r.Id equals ur.TelegramRoleId
+                          join bu in _botUsers on ur.TelegramBotUserId equals bu.Id
+                          join u in _users on bu.TelegramUserId equals u.Id
+                          where u.Username == username && bu.TelegramBotId.Equals(_botId) && r.Name == role
+                          select r)
+                  .AnyAsync();
         }
 
         public async Task AddUserRole(long telegramId, string role)
         {
-            TKey botUserId = await _db.GetBotUserId(_botId, telegramId);
+            TKey botUserId = await _linqHelper.GetBotUserId(_users, _botUsers, _botId, telegramId);
             TKey roleId = (await _db.Set<TRole>().OrderBy(r => r.Id).FirstAsync(r => r.Name == role)).Id;
 
             await _db.AddAsync(ContextBuilder.CreateTelegramBotUserRole(_options.BotUserRoleType, botUserId, roleId));
@@ -90,7 +101,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
 
         public async Task AddUserRole(string username, string role)
         {
-            TKey botUserId = await _db.GetBotUserId(_botId, username);
+            TKey botUserId = await _linqHelper.GetBotUserId(_users, _botUsers, _botId, username);
             TKey roleId = (await _db.Set<TRole>().OrderBy(r => r.Id).FirstAsync(r => r.Name == role)).Id;
 
             await _db.AddAsync(ContextBuilder.CreateTelegramBotUserRole(_options.BotUserRoleType, botUserId, roleId));
@@ -99,66 +110,46 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
 
         public async Task RemoveUserRole(long telegramId, string role)
         {
-            var connection = _db.Database.GetDbConnection();
-            if (connection.State == ConnectionState.Closed) await connection.OpenAsync();
+            _db.Remove(await (from r in _roles
+                              join ur in _userRoles on r.Id equals ur.TelegramRoleId
+                              join bu in _botUsers on ur.TelegramBotUserId equals bu.Id
+                              join u in _users on bu.TelegramUserId equals u.Id
+                              where u.TelegramId == telegramId && r.Name == role && bu.TelegramBotId.Equals(_botId)
+                              select ur).FirstOrDefaultAsync());
 
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText =
-                        "DELETE t1 " +
-                        "FROM (((TelegramBotUserRoles AS t1 " +
-                        "INNER JOIN TelegramRoles AS t2 ON t1.TelegramRoleId = t2.Id) " +
-                        "INNER JOIN TelegramBotUsers AS t3 ON t1.TelegramBotUserId = t3.Id) " +
-                        "INNER JOIN TelegramUsers AS t4 ON t3.TelegramUserId = t4.Id) " +
-                        $"WHERE t2.Name = '{role}' AND t3.TelegramBotId = {_botId} AND t4.TelegramId = {telegramId}";
-
-                await command.ExecuteNonQueryAsync();
-            }
-
-            if (connection.State == ConnectionState.Open) await connection.CloseAsync();
+            await _db.SaveChangesAsync();
         }
 
         public async Task RemoveUserRole(string username, string role)
         {
-            var connection = _db.Database.GetDbConnection();
-            if (connection.State == ConnectionState.Closed) await connection.OpenAsync();
+            _db.Remove(await (from r in _roles
+                              join ur in _userRoles on r.Id equals ur.TelegramRoleId
+                              join bu in _botUsers on ur.TelegramBotUserId equals bu.Id
+                              join u in _users on bu.TelegramUserId equals u.Id
+                              where u.Username == username && r.Name == role && bu.TelegramBotId.Equals(_botId)
+                              select ur).FirstOrDefaultAsync());
 
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText =
-                        "DELETE t1 " +
-                        "FROM (((TelegramBotUserRoles AS t1 " +
-                        "INNER JOIN TelegramRoles AS t2 ON t1.TelegramRoleId = t2.Id) " +
-                        "INNER JOIN TelegramBotUsers AS t3 ON t1.TelegramBotUserId = t3.Id) " +
-                        "INNER JOIN TelegramUsers AS t4 ON t3.TelegramUserId = t4.Id) " +
-                        $"WHERE t2.Name = '{role}' AND t3.TelegramBotId = {_botId} AND t4.Username = '{username}'";
-
-                await command.ExecuteNonQueryAsync();
-            }
-
-            if (connection.State == ConnectionState.Open) await connection.CloseAsync();
+            await _db.SaveChangesAsync();
         }
 
         public async Task<List<TRole>> GetUserRoles(long telegramId)
         {
-            return await _db.Set<TRole>().FromSqlRaw(
-                "SELECT t1.* "
-              + "FROM (((TelegramRoles AS t1 "
-              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
-              + $"WHERE t4.TelegramId = {telegramId} AND t3.TelegramBotId = {_botId}").ToListAsync();
+            return await (from r in _roles
+                          join ur in _userRoles on r.Id equals ur.TelegramRoleId
+                          join bu in _botUsers on ur.TelegramBotUserId equals bu.Id
+                          join u in _users on bu.TelegramUserId equals u.Id
+                          where u.TelegramId == telegramId && bu.TelegramBotId.Equals(_botId)
+                          select r).Cast<TRole>().ToListAsync();
         }
 
         public async Task<List<TRole>> GetUserRoles(string username)
         {
-            return await _db.Set<TRole>().FromSqlRaw(
-                "SELECT t1.* "
-              + "FROM (((TelegramRoles AS t1 "
-              + "INNER JOIN TelegramBotUserRoles AS t2 ON t1.Id = t2.TelegramRoleId) "
-              + "INNER JOIN TelegramBotUsers AS t3 ON t3.Id = t2.TelegramBotUserId) "
-              + "INNER JOIN TelegramUsers AS t4 ON t4.Id = t3.TelegramUserId) "
-              + $"WHERE t4.Username = '{username}' AND t3.TelegramBotId = {_botId}").ToListAsync();
+            return await (from r in _roles
+                          join ur in _userRoles on r.Id equals ur.TelegramRoleId
+                          join bu in _botUsers on ur.TelegramBotUserId equals bu.Id
+                          join u in _users on bu.TelegramUserId equals u.Id
+                          where u.Username == username && bu.TelegramBotId.Equals(_botId)
+                          select r).Cast<TRole>().ToListAsync();
         }
     }
 }

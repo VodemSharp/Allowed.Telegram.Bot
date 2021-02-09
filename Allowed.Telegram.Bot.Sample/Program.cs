@@ -24,7 +24,7 @@ namespace Allowed.Telegram.Bot.Sample.NoDb
                     IConfiguration config = hostContext.Configuration;
 
                     string connection = config.GetConnectionString("DefaultConnection");
-                    services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(connection, ServerVersion.AutoDetect(connection)),
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection),
                         ServiceLifetime.Transient, ServiceLifetime.Transient);
 
                     services.AddTelegramClients(config.GetSection("Telegram:Bots").Get<BotData[]>())

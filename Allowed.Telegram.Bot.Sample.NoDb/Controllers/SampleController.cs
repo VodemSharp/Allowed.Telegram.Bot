@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers
 {
+    [BotName("Sample")]
     public class SampleController : CommandController
     {
         [Command("start")]

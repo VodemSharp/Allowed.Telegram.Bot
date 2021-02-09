@@ -2,6 +2,7 @@
 using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Builders;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions;
+using Allowed.Telegram.Bot.EntityFrameworkCore.Helpers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -16,15 +17,27 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
         where TKey : IEquatable<TKey>
         where TUser : TelegramUser<TKey>
     {
+        private readonly LinqHelper _linqHelper;
         private readonly ContextOptions _options;
         private readonly DbContext _db;
         private readonly TKey _botId;
+
+        private readonly IQueryable<TelegramBotUserRole<TKey>> _userRoles;
+        private readonly IQueryable<TelegramRole<TKey>> _roles;
+        private readonly IQueryable<TelegramUser<TKey>> _users;
+        private readonly IQueryable<TelegramBotUser<TKey>> _botUsers;
 
         public UserService(IServiceProvider provider, ContextOptions options, TKey botId)
         {
             _db = (DbContext)provider.GetService(options.ContextType);
             _options = options;
             _botId = botId;
+            _linqHelper = new LinqHelper();
+
+            _userRoles = _db.Set(_options.BotUserType).Cast<TelegramBotUserRole<TKey>>();
+            _roles = _db.Set(_options.RoleType).Cast<TelegramRole<TKey>>();
+            _users = _db.Set(_options.UserType).Cast<TelegramUser<TKey>>();
+            _botUsers = _db.Set(_options.BotUserType).Cast<TelegramBotUser<TKey>>();
         }
 
         public async Task CheckUser(User telegramUser)
@@ -47,12 +60,11 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
                 await _db.SaveChangesAsync();
             }
             // If user exists in db, but doesn't use bot
-            else if (!await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t1.* "
-                + "FROM TelegramUsers as t1 "
-                + "INNER JOIN TelegramBotUsers as t2 ON t1.Id = t2.TelegramUserId "
-                + $"WHERE t1.Id = {user.Id} AND t2.TelegramBotId = {_botId} "
-                + "LIMIT 1").AnyAsync())
+            else if (!await
+                (from u in _users
+                 join bu in _botUsers on u.Id equals bu.TelegramUserId
+                 where u.Id.Equals(user.Id) && bu.TelegramBotId.Equals(_botId)
+                 select u).AnyAsync())
             {
                 await _db.AddAsync(ContextBuilder.CreateTelegramBotUser(_options.BotUserType, user.Id, _botId));
                 await _db.SaveChangesAsync();
@@ -85,32 +97,26 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
 
         public async Task<List<TUser>> GetUsers()
         {
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t2.* "
-                + "FROM TelegramBotUsers AS t1 "
-                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId}")
-                .ToListAsync();
+            return await (from u in _users
+                          join bu in _botUsers on u.Id equals bu.TelegramUserId
+                          where bu.TelegramBotId.Equals(_botId)
+                          select u).Cast<TUser>().ToListAsync();
         }
 
         public async Task<int> CountUsers()
         {
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t2.* "
-                + "FROM TelegramBotUsers AS t1 "
-                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId}")
-                .CountAsync();
+            return await (from u in _users
+                          join bu in _botUsers on u.Id equals bu.TelegramUserId
+                          where bu.TelegramBotId.Equals(_botId)
+                          select u).CountAsync();
         }
 
         public async Task<bool> AnyUser(long telegramId)
         {
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t2.* "
-                + "FROM TelegramBotUsers AS t1 "
-                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} AND t2.TelegramId = {telegramId} "
-                + "LIMIT 1").AnyAsync();
+            return await (from u in _users
+                          join bu in _botUsers on u.Id equals bu.TelegramUserId
+                          where bu.TelegramBotId.Equals(_botId) && u.TelegramId == telegramId
+                          select u).AnyAsync();
         }
 
         public async Task<bool> AnyUser(string username)
@@ -118,23 +124,20 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
             if (string.IsNullOrEmpty(username))
                 return false;
 
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t2.* "
-                + "FROM TelegramBotUsers AS t1 "
-                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} AND t2.Username = '{username}' "
-                + "LIMIT 1").AnyAsync();
+            return await (from u in _users
+                          join bu in _botUsers on u.Id equals bu.TelegramUserId
+                          where bu.TelegramBotId.Equals(_botId) && u.Username == username
+                          select u).AnyAsync();
         }
 
 
         public async Task<TUser> GetUser(long telegramId)
         {
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t2.* "
-                + "FROM TelegramBotUsers AS t1 "
-                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} AND t2.TelegramId = {telegramId} "
-                + "LIMIT 1").OrderBy(u => u.Id).FirstOrDefaultAsync();
+            return await (from u in _users
+                          join bu in _botUsers on u.Id equals bu.TelegramUserId
+                          where bu.TelegramBotId.Equals(_botId) && u.TelegramId == telegramId
+                          orderby u.Id
+                          select u).Cast<TUser>().FirstOrDefaultAsync();
         }
 
         public async Task<TUser> GetUser(string username)
@@ -142,33 +145,30 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
             if (string.IsNullOrEmpty(username))
                 return null;
 
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t2.* "
-                + "FROM TelegramBotUsers AS t1 "
-                + "INNER JOIN TelegramUsers AS t2 ON t1.TelegramUserId = t2.Id "
-                + $"WHERE t1.TelegramBotId = {_botId} AND t2.Username = '{username}' "
-                + "LIMIT 1").OrderBy(u => u.Id).FirstOrDefaultAsync();
+            return await (from u in _users
+                          join bu in _botUsers on u.Id equals bu.TelegramUserId
+                          where bu.TelegramBotId.Equals(_botId) && u.Username == username
+                          orderby u.Id
+                          select u).Cast<TUser>().FirstOrDefaultAsync();
         }
 
         public async Task<TKey> GetBotUserId(long telegramId)
         {
-            return await _db.GetBotUserId(_botId, telegramId);
+            return await _linqHelper.GetBotUserId(_users, _botUsers, _botId, telegramId);
         }
 
         public async Task<TKey> GetBotUserId(string username)
         {
-            return await _db.GetBotUserId(_botId, username);
+            return await _linqHelper.GetBotUserId(_users, _botUsers, _botId, username);
         }
 
         public async Task<List<TUser>> GetUsersByRole(string role)
         {
-            return await _db.Set<TUser>().FromSqlRaw(
-                  "SELECT t4.* "
-                + "FROM (((TelegramBotUserRoles as t1 "
-                + "INNER JOIN TelegramRoles as t2 ON t1.TelegramRoleId = t2.Id) "
-                + "INNER JOIN TelegramBotUsers as t3 ON t1.TelegramBotUserId = t3.Id) "
-                + "INNER JOIN TelegramUsers as t4 ON t3.TelegramUserId = t4.Id) "
-                + $"WHERE t2.Name = '{role}' AND t3.TelegramBotId = {_botId}").ToListAsync();
+            return await (from u in _users
+                          join ur in _userRoles on u.Id equals ur.TelegramBotUserId
+                          join r in _roles on ur.TelegramRoleId equals r.Id
+                          where r.Name == role && ur.TelegramBotUserId.Equals(_botId)
+                          select u).Cast<TUser>().ToListAsync();
         }
     }
 }
