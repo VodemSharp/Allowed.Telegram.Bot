@@ -13,9 +13,5 @@ namespace Allowed.Telegram.Bot.Data.Factories
         IRoleService<TKey, TRole> CreateRoleService<TKey, TRole>(TKey botId)
            where TKey : IEquatable<TKey>
            where TRole : TelegramRole<TKey>;
-
-        IStateService<TKey, TState> CreateStateService<TKey, TState>(TKey botId)
-           where TKey : IEquatable<TKey>
-           where TState : TelegramState<TKey>;
     }
 }

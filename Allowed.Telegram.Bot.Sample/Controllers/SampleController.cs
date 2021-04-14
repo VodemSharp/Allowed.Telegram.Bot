@@ -6,6 +6,7 @@ using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.DbModels.Allowed;
 using System;
 using System.Threading.Tasks;
+using Telegram.Bot.Types.Enums;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
 {

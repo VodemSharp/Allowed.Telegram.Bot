@@ -12,6 +12,5 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Options
         public Type BotType { get; set; }
         public Type BotUserType { get; set; }
         public Type BotUserRoleType { get; set; }
-        public Type StateType { get; set; }
     }
 }

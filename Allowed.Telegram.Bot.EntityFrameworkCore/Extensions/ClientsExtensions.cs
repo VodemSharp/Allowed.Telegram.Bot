@@ -30,8 +30,8 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Extensions
                 ContextOptions options = provider.GetService<ContextOptions>();
 
                 return (TelegramManager)ActivatorUtilities.CreateInstance(provider,
-                    typeof(TelegramDbManager<,,,,,>).MakeGenericType(new Type[] {
-                        options.KeyType, options.UserType, options.BotUserType, options.RoleType, options.BotType, options.StateType
+                    typeof(TelegramDbManager<,,,,>).MakeGenericType(new Type[] {
+                        options.KeyType, options.UserType, options.BotUserType, options.RoleType, options.BotType
                 }));
             });
 

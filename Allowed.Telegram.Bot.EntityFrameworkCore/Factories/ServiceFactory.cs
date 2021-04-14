@@ -29,12 +29,5 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Factories
         {
             return (IRoleService<TKey, TRole>)ActivatorUtilities.CreateInstance(_provider, typeof(RoleService<TKey, TRole>), botId);
         }
-
-        public IStateService<TKey, TState> CreateStateService<TKey, TState>(TKey botId)
-           where TKey : IEquatable<TKey>
-           where TState : TelegramState<TKey>
-        {
-            return (IStateService<TKey, TState>)ActivatorUtilities.CreateInstance(_provider, typeof(StateService<TKey, TState>), botId);
-        }
     }
 }

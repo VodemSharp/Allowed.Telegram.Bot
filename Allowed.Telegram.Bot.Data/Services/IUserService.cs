@@ -25,5 +25,11 @@ namespace Allowed.Telegram.Bot.Data.Services
         Task<TKey> GetBotUserId(string username);
 
         Task<List<TUser>> GetUsersByRole(string role);
+
+        Task SetState(long telegramId, string value);
+        Task SetState(string username, string value);
+
+        Task<string> GetState(long telegramId);
+        Task<string> GetState(string username);
     }
 }

@@ -13,31 +13,31 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
     // TextController contains one more good example!
     public class StateController : CommandController<int>
     {
-        private IStateService<int, ApplicationTgState> _stateService;
+        private IUserService<int, ApplicationTgUser> _userService;
 
         public override void Initialize(IServiceFactory factory, long telegramId)
         {
-            _stateService = factory.CreateStateService<int, ApplicationTgState>(BotId);
+            _userService = factory.CreateUserService<int, ApplicationTgUser>(BotId);
         }
 
         [Command("get_state")]
         public async Task GetState(MessageData messageData)
         {
             await messageData.Client.SendTextMessageAsync(messageData.Message.Chat.Id,
-                (await _stateService.GetState(messageData.Message.Chat.Id))?.Value);
+                await _userService.GetState(messageData.Message.Chat.Id));
         }
 
         [Command("set_state_test1")]
         public async Task SetTest1State(MessageData messageData)
         {
-            await _stateService.SetState(messageData.Message.Chat.Id, "Test1State");
+            await _userService.SetState(messageData.Message.Chat.Id, "Test1State");
             await messageData.Client.SendTextMessageAsync(messageData.Message.Chat.Id, "Test1 state setted!");
         }
 
         [Command("set_state_test2")]
         public async Task SetTest2State(MessageData messageData)
         {
-            await _stateService.SetState(messageData.Message.Chat.Id, "Test2State");
+            await _userService.SetState(messageData.Message.Chat.Id, "Test2State");
             await messageData.Client.SendTextMessageAsync(messageData.Message.Chat.Id, "Test2 state setted!");
         }
 
@@ -45,7 +45,7 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         [Command("set_state_test3")]
         public async Task SetTest3State(MessageData messageData)
         {
-            await _stateService.SetState(messageData.Message.Chat.Id, "Test3State");
+            await _userService.SetState(messageData.Message.Chat.Id, "Test3State");
             await messageData.Client.SendTextMessageAsync(messageData.Message.Chat.Id, "Test3 state setted!");
         }
 

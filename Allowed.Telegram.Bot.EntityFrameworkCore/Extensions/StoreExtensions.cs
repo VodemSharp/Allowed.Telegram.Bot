@@ -38,9 +38,8 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Extensions
             Type botType = typeof(TelegramBot<>);
             Type botUserType = typeof(TelegramBotUser<>);
             Type botUserRoleType = typeof(TelegramBotUserRole<>);
-            Type stateType = typeof(TelegramState<>);
 
-            ContextOptions options = new ContextOptions
+            ContextOptions options = new()
             {
                 ContextType = contextType,
 
@@ -48,8 +47,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Extensions
                 RoleType = setTypes.FirstOrDefault(GetSetTypeCheck(roleType)),
                 BotType = setTypes.FirstOrDefault(GetSetTypeCheck(botType)),
                 BotUserType = setTypes.FirstOrDefault(GetSetTypeCheck(botUserType)),
-                BotUserRoleType = setTypes.FirstOrDefault(GetSetTypeCheck(botUserRoleType)),
-                StateType = setTypes.FirstOrDefault(GetSetTypeCheck(stateType)),
+                BotUserRoleType = setTypes.FirstOrDefault(GetSetTypeCheck(botUserRoleType))
             };
 
             options.KeyType = options.UserType.BaseType.GenericTypeArguments[0];

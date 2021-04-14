@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,13 +20,12 @@ using Telegram.Bot;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
 {
-    public class TelegramDbManager<TKey, TUser, TBotUser, TRole, TBot, TState> : TelegramManager
+    public class TelegramDbManager<TKey, TUser, TBotUser, TRole, TBot> : TelegramManager
         where TKey : IEquatable<TKey>
         where TUser : TelegramUser<TKey>
         where TBotUser : TelegramBotUser<TKey>
         where TRole : TelegramRole<TKey>
         where TBot : TelegramBot<TKey>
-        where TState : TelegramState<TKey>
     {
         private readonly IServiceFactory _serviceFactory;
 
@@ -49,17 +47,13 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
             return _serviceFactory.CreateRoleService<TKey, TRole>(botId);
         }
 
-        private IStateService<TKey, TState> GetStateService(TKey botId)
-        {
-            return _serviceFactory.CreateStateService<TKey, TState>(botId);
-        }
-
-        private MessageDbHandler<TKey, TRole, TState> GetMessageHandler(
-            IRoleService<TKey, TRole> roleService, IStateService<TKey, TState> stateService,
+        private MessageDbHandler<TKey, TUser, TRole> GetMessageHandler(
+            IUserService<TKey, TUser> userService,
+            IRoleService<TKey, TRole> roleService,
             ITelegramBotClient client, BotData botData)
         {
-            return new MessageDbHandler<TKey, TRole, TState>(_controllersCollection,
-                client, botData, roleService, stateService, Services);
+            return new MessageDbHandler<TKey, TUser, TRole>(_controllersCollection,
+                client, botData, userService, roleService, Services);
         }
 
         private async Task<Dictionary<string, TKey>> InitializeBots(IEnumerable<string> botNames)
@@ -103,10 +97,9 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                         {
                             IUserService<TKey, TUser> userService = GetUserService(botId);
                             IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-                            IStateService<TKey, TState> stateService = GetStateService(botId);
 
-                            MessageDbHandler<TKey, TRole, TState> messageHandler =
-                                GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+                            MessageDbHandler<TKey, TUser, TRole> messageHandler =
+                                GetMessageHandler(userService, roleService, client.Client, client.BotData);
 
                             await userService.CheckUser(b.Message.From);
                             await messageHandler.OnMessage(b, botId);
@@ -123,10 +116,9 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                         {
                             IUserService<TKey, TUser> userService = GetUserService(botId);
                             IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-                            IStateService<TKey, TState> stateService = GetStateService(botId);
 
-                            MessageDbHandler<TKey, TRole, TState> messageHandler =
-                                GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+                            MessageDbHandler<TKey, TUser, TRole> messageHandler =
+                                GetMessageHandler(userService, roleService, client.Client, client.BotData);
 
                             await userService.CheckUser(b.CallbackQuery.From);
                             await messageHandler.OnCallbackQuery(b, botId);
@@ -143,10 +135,9 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                         {
                             IUserService<TKey, TUser> userService = GetUserService(botId);
                             IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-                            IStateService<TKey, TState> stateService = GetStateService(botId);
 
-                            MessageDbHandler<TKey, TRole, TState> messageHandler =
-                                GetMessageHandler(roleService, stateService, client.Client, client.BotData);
+                            MessageDbHandler<TKey, TUser, TRole> messageHandler =
+                                GetMessageHandler(userService, roleService, client.Client, client.BotData);
 
                             await userService.CheckUser(b.InlineQuery.From);
                             await messageHandler.OnInlineQuery(b, botId);
@@ -157,7 +148,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                         }
                     };
 
-                    client.Client.StartReceiving();
+                    client.Client.StartReceiving(cancellationToken: stoppingToken);
                 }
 
                 await Task.Delay(Timeout.Infinite);

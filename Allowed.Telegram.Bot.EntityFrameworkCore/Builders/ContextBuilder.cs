@@ -88,17 +88,5 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Builders
 
             return botUserRole;
         }
-
-        public static TState CreateTelegramState<TKey, TState>(TKey botUserId, string value)
-            where TKey : IEquatable<TKey>
-            where TState : TelegramState<TKey>
-        {
-            TState state = Activator.CreateInstance<TState>();
-
-            state.TelegramBotUserId = botUserId;
-            state.Value = value;
-
-            return state;
-        }
     }
 }

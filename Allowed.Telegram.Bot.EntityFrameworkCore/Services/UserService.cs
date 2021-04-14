@@ -170,5 +170,47 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
                           where r.Name == role && ur.TelegramBotUserId.Equals(_botId)
                           select u).Cast<TUser>().ToListAsync();
         }
+
+        private IQueryable<TelegramBotUser<TKey>> GetBotUserQuery(long telegramId)
+        {
+            return from bu in _botUsers
+                   join u in _users on bu.TelegramUserId equals u.Id
+                   where bu.TelegramBotId.Equals(_botId) && u.TelegramId == telegramId
+                   orderby u.Id
+                   select bu;
+        }
+
+        private IQueryable<TelegramBotUser<TKey>> GetBotUserQuery(string username)
+        {
+            return from bu in _botUsers
+                   join u in _users on bu.TelegramUserId equals u.Id
+                   where bu.TelegramBotId.Equals(_botId) && u.Username == username
+                   orderby u.Id
+                   select bu;
+        }
+
+        public async Task SetState(long telegramId, string value)
+        {
+            TelegramBotUser<TKey> user = await GetBotUserQuery(telegramId).FirstOrDefaultAsync();
+            user.State = value;
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task SetState(string username, string value)
+        {
+            TelegramBotUser<TKey> user = await GetBotUserQuery(username).FirstOrDefaultAsync();
+            user.State = value;
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<string> GetState(long telegramId)
+        {
+            return await GetBotUserQuery(telegramId).Select(u => u.State).FirstOrDefaultAsync();
+        }
+
+        public async Task<string> GetState(string username)
+        {
+            return await GetBotUserQuery(username).Select(u => u.State).FirstOrDefaultAsync();
+        }
     }
 }

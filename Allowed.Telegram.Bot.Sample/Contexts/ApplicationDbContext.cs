@@ -9,7 +9,7 @@ using System;
 namespace Allowed.Telegram.Bot.Sample.Contexts
 {
     public class ApplicationDbContext :
-        TelegramBotDbContext<int, ApplicationTgUser, ApplicationTgRole, ApplicationTgBot, ApplicationTgBotUser, ApplicationTgBotUserRole, ApplicationTgState>
+        TelegramBotDbContext<int, ApplicationTgUser, ApplicationTgRole, ApplicationTgBot, ApplicationTgBotUser, ApplicationTgBotUserRole>
     {
         public DbSet<UserFile> UserFiles { get; set; }
 

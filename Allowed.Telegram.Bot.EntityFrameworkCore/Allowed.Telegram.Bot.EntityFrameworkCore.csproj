@@ -8,7 +8,7 @@
     <Description>User account control system for Allowed.Telegram.Bot based on Entity Framework Core.</Description>
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <RepositoryUrl>https://github.com/VodemSharp/Allowed.Telegram.Bot</RepositoryUrl>
   </PropertyGroup>
 

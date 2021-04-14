@@ -12,11 +12,11 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
     [BotName("Sample")]
     public class TextController : CommandController<int>
     {
-        private IStateService<int, ApplicationTgState> _stateService;
+        private IUserService<int, ApplicationTgUser> _userService;
 
         public override void Initialize(IServiceFactory factory, long telegramId)
         {
-            _stateService = factory.CreateStateService<int, ApplicationTgState>(BotId);
+            _userService = factory.CreateUserService<int, ApplicationTgUser>(BotId);
         }
 
         [TextCommand]
@@ -28,7 +28,7 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
         [Command("set_text_test_state")]
         public async Task SetTest1State(MessageData messageData)
         {
-            await _stateService.SetState(messageData.Message.Chat.Id, "TextTestState");
+            await _userService.SetState(messageData.Message.Chat.Id, "TextTestState");
             await messageData.Client.SendTextMessageAsync(messageData.Message.Chat.Id, "Text test state setted!");
         }
 

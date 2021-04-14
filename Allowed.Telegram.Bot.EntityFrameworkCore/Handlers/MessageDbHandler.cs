@@ -24,26 +24,26 @@ using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
 {
-    public class MessageDbHandler<TKey, TRole, TState> : MessageHandler
+    public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
 
         where TKey : IEquatable<TKey>
+        where TUser : TelegramUser<TKey>
         where TRole : TelegramRole<TKey>
-        where TState : TelegramState<TKey>
     {
+        private readonly IUserService<TKey, TUser> _userService;
         private readonly IRoleService<TKey, TRole> _roleService;
-        private readonly IStateService<TKey, TState> _stateService;
 
         public MessageDbHandler(ControllersCollection collection, ITelegramBotClient client, BotData botData,
-            IRoleService<TKey, TRole> roleService, IStateService<TKey, TState> stateService, IServiceProvider provider)
+            IUserService<TKey, TUser> userService, IRoleService<TKey, TRole> roleService, IServiceProvider provider)
             : base(collection, client, botData, provider)
         {
+            _userService = userService;
             _roleService = roleService;
-            _stateService = stateService;
         }
 
         private async Task<string> GetStateValue(long telegramId)
         {
-            return (await _stateService.GetState(telegramId))?.Value;
+            return await _userService.GetState(telegramId);
         }
 
         protected override async Task<MethodInfo[]> GetAllowedMethods(long telegramId)
@@ -82,7 +82,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
                     method = textMethods.FirstOrDefault(m => m.GetStateAttributes().Any(s => s.GetState() == userState));
 
                 if (method == null)
-                    method = textMethods.FirstOrDefault(m => !m.GetStateAttributes().Any()); 
+                    method = textMethods.FirstOrDefault(m => !m.GetStateAttributes().Any());
             }
 
             return method;

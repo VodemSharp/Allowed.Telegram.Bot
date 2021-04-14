@@ -4,7 +4,7 @@ using System;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Contexts
 {
-    public abstract class TelegramBotDbContext<TKey, TUser, TRole, TBot, TBotUser, TBotUserRole, TState> : DbContext
+    public abstract class TelegramBotDbContext<TKey, TUser, TRole, TBot, TBotUser, TBotUserRole> : DbContext
 
         where TKey : IEquatable<TKey>
         where TUser : TelegramUser<TKey>
@@ -12,7 +12,6 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Contexts
         where TBot : TelegramBot<TKey>
         where TBotUser : TelegramBotUser<TKey>
         where TBotUserRole : TelegramBotUserRole<TKey>
-        where TState : TelegramState<TKey>
     {
         public TelegramBotDbContext(DbContextOptions options) : base(options) { }
 
@@ -21,7 +20,6 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Contexts
         public virtual DbSet<TBot> TelegramBots { get; set; }
         public virtual DbSet<TBotUser> TelegramBotUsers { get; set; }
         public virtual DbSet<TBotUserRole> TelegramBotUserRoles { get; set; }
-        public virtual DbSet<TState> TelegramStates { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -67,13 +65,6 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Contexts
 
             builder.Entity<TBotUserRole>().HasOne<TRole>().WithMany()
                    .HasForeignKey(bur => bur.TelegramRoleId);
-
-            // TelegramStates
-            builder.Entity<TState>().ToTable("TelegramStates");
-            builder.Entity<TState>().HasKey(s => s.Id);
-
-            builder.Entity<TState>().HasOne<TBotUser>().WithMany()
-                   .HasForeignKey(s => s.TelegramBotUserId);
         }
     }
 }
