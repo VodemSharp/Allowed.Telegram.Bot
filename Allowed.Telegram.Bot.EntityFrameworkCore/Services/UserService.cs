@@ -83,6 +83,14 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
                 _db.Set<TUser>().Update(user);
                 await _db.SaveChangesAsync();
             }
+
+            // If bot user blocked
+            TelegramBotUser<TKey> botUser = await GetBotUserQuery(user.TelegramId).FirstOrDefaultAsync();
+            if (botUser.BotBlocked)
+            {
+                botUser.BotBlocked = false;
+                await _db.SaveChangesAsync();
+            }
         }
 
         private async Task<TUser> GetTelegramUser(long telegramId)
@@ -211,6 +219,30 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Services
         public async Task<string> GetState(string username)
         {
             return await GetBotUserQuery(username).Select(u => u.State).FirstOrDefaultAsync();
+        }
+
+        private async Task SetUserBotBlocked(long telegramId, bool value)
+        {
+            TelegramBotUser<TKey> user = await GetBotUserQuery(telegramId).FirstOrDefaultAsync();
+            user.BotBlocked = value;
+            await _db.SaveChangesAsync();
+        }
+
+        private async Task SetUserBotBlocked(string username, bool value)
+        {
+            TelegramBotUser<TKey> user = await GetBotUserQuery(username).FirstOrDefaultAsync();
+            user.BotBlocked = value;
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task BlockBot(long telegramId)
+        {
+            await SetUserBotBlocked(telegramId, true);
+        }
+
+        public async Task BlockBot(string username)
+        {
+            await SetUserBotBlocked(username, true);
         }
     }
 }

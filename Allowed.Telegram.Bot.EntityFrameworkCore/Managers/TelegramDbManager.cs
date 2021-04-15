@@ -14,6 +14,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -59,7 +61,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
         private async Task<Dictionary<string, TKey>> InitializeBots(IEnumerable<string> botNames)
         {
             ContextOptions options = Services.GetService<ContextOptions>();
-            Dictionary<string, TKey> result = new Dictionary<string, TKey> { };
+            Dictionary<string, TKey> result = new() { };
 
             using (DbContext db = (DbContext)Services.GetService(options.ContextType))
             {
@@ -148,10 +150,34 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                         }
                     };
 
+                    client.Client.ApiResponseReceived += async (a, b) =>
+                    {
+                        try
+                        {
+                            if (b.ResponseMessage.StatusCode == HttpStatusCode.Forbidden)
+                            {
+                                string response = await b.ResponseMessage.Content.ReadAsStringAsync();
+
+                                if (response == "{\"ok\":false,\"error_code\":403,\"description\":\"Forbidden: bot was blocked by the user\"}")
+                                {
+                                    string request = await b.ApiRequestEventArgs.HttpContent.ReadAsStringAsync();
+                                    long telegramId = JsonSerializer.Deserialize<JsonElement>(request).GetProperty("chat_id").GetInt64();
+
+                                    IUserService<TKey, TUser> userService = GetUserService(botId);
+                                    await userService.BlockBot(telegramId);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.ToString());
+                        }
+                    };
+
                     client.Client.StartReceiving(cancellationToken: stoppingToken);
                 }
 
-                await Task.Delay(Timeout.Infinite);
+                await Task.Delay(Timeout.Infinite, stoppingToken);
             }
             catch (Exception ex)
             {

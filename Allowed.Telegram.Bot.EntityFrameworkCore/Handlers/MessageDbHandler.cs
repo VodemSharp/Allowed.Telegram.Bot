@@ -95,7 +95,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
             if (method != null && method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
-                List<object> parameters = new List<object> { };
+                List<object> parameters = new() { };
 
                 if (methodParams.Any(p => p.ParameterType == typeof(MessageData)))
                 {
@@ -130,7 +130,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
             if (method != null && method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
-                List<object> parameters = new List<object> { };
+                List<object> parameters = new() { };
 
                 if (methodParams.Any(p => p.ParameterType == typeof(CallbackQueryData)))
                 {
@@ -174,7 +174,7 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
             if (method != null && method.ControllerType != null && method.Method != null)
             {
                 ParameterInfo[] methodParams = method.Method.GetParameters();
-                List<object> parameters = new List<object> { };
+                List<object> parameters = new() { };
 
                 if (methodParams.Any(p => p.ParameterType == typeof(InlineQueryData)))
                 {

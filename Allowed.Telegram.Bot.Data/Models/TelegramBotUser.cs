@@ -10,6 +10,7 @@ namespace Allowed.Telegram.Bot.Data.Models
         public virtual TKey TelegramUserId { get; set; }
         public virtual TKey TelegramBotId { get; set; }
 
+        public virtual bool BotBlocked { get; set; }
         public virtual string State { get; set; }
     }
 }

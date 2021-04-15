@@ -31,5 +31,8 @@ namespace Allowed.Telegram.Bot.Data.Services
 
         Task<string> GetState(long telegramId);
         Task<string> GetState(string username);
+
+        Task BlockBot(long telegramId);
+        Task BlockBot(string username);
     }
 }
