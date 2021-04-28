@@ -13,10 +13,10 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Helpers
 
             where TKey : IEquatable<TKey>
         {
-            return await (from u in users
-                          join bu in botUsers on u.Id equals bu.TelegramUserId
-                          where u.TelegramId == telegramId && bu.TelegramBotId.Equals(botId)
-                          select u.Id)
+            return await (from bu in botUsers
+                          join u in users on bu.TelegramUserId equals u.Id
+                          where bu.TelegramBotId.Equals(botId) && u.TelegramId == telegramId
+                          select bu.Id)
                   .FirstOrDefaultAsync();
         }
 
@@ -25,10 +25,10 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Helpers
 
             where TKey : IEquatable<TKey>
         {
-            return await (from u in users
-                          join bu in botUsers on u.Id equals bu.TelegramUserId
-                          where u.Username == username && bu.TelegramBotId.Equals(botId)
-                          select u.Id)
+            return await (from bu in botUsers
+                          join u in users on bu.TelegramUserId equals u.Id
+                          where bu.TelegramBotId.Equals(botId) && u.Username == username
+                          select bu.Id)
                   .FirstOrDefaultAsync();
         }
     }
