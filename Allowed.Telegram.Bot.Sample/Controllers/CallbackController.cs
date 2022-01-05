@@ -5,6 +5,7 @@ using Allowed.Telegram.Bot.Sample.Models;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Allowed.Telegram.Bot.Sample.Controllers
@@ -23,9 +24,8 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
                     {
                         new List<InlineKeyboardButton>
                         {
-                            new InlineKeyboardButton
+                            new InlineKeyboardButton("True")
                             {
-                                Text = "True",
                                 CallbackData = JsonConvert.SerializeObject(
                                     new TestCallbackQueryModel
                                     {
@@ -33,9 +33,8 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
                                         SomeData = true
                                     })
                             },
-                            new InlineKeyboardButton
+                            new InlineKeyboardButton("False")
                             {
-                                Text = "False",
                                 CallbackData = JsonConvert.SerializeObject(
                                     new TestCallbackQueryModel
                                     {
@@ -43,9 +42,8 @@ namespace Allowed.Telegram.Bot.Sample.Controllers
                                         SomeData = false
                                     })
                             },
-                            new InlineKeyboardButton
+                            new InlineKeyboardButton("Default")
                             {
-                                Text = "Default",
                                 CallbackData = JsonConvert.SerializeObject(
                                     new CallbackQueryModel {
                                         Path = "default"

@@ -2,6 +2,7 @@
 using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Models;
 using System.Threading.Tasks;
+using Telegram.Bot;
 
 namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers
 {

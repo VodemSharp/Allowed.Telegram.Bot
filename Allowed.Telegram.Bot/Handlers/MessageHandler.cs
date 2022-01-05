@@ -12,9 +12,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -267,69 +267,43 @@ namespace Allowed.Telegram.Bot.Handlers
             }
         }
 
-        public async Task<object> OnMessage(MessageEventArgs e)
+        public async Task<object> OnUpdate(ITelegramBotClient client, Update update, CancellationToken cancellationToken)
         {
-            Message message = e.Message;
             object result = null;
 
             try
             {
-                result = await InvokeMethod(GetMethodType(message), message);
-
                 MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-                if (messageMiddleware != null)
+                if (update.Message != null)
                 {
-                    messageMiddleware.AfterMessageProcessed(e.Message.From.Id);
-                    await messageMiddleware.AfterMessageProcessedAsync(e.Message.From.Id);
+                    result = await InvokeMethod(GetMethodType(update.Message), update.Message);
+
+                    if (messageMiddleware != null)
+                    {
+                        messageMiddleware.AfterMessageProcessed(update.Message.From.Id);
+                        await messageMiddleware.AfterMessageProcessedAsync(update.Message.From.Id);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-            }
-
-            return result;
-        }
-
-        public async Task<object> OnCallbackQuery(CallbackQueryEventArgs e)
-        {
-            CallbackQuery callback = e.CallbackQuery;
-            object result = null;
-
-            try
-            {
-                if (e.CallbackQuery.Data != null)
-                    result = await InvokeCallback(MethodType.Callback, callback);
-
-                MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-                if (messageMiddleware != null)
+                else if (update.CallbackQuery != null)
                 {
-                    messageMiddleware.AfterCallbackProcessed(e.CallbackQuery.From.Id);
-                    await messageMiddleware.AfterCallbackProcessedAsync(e.CallbackQuery.From.Id);
+                    if (update.CallbackQuery.Data != null)
+                        result = await InvokeCallback(MethodType.Callback, update.CallbackQuery);
+
+                    if (messageMiddleware != null)
+                    {
+                        messageMiddleware.AfterCallbackProcessed(update.CallbackQuery.From.Id);
+                        await messageMiddleware.AfterCallbackProcessedAsync(update.CallbackQuery.From.Id);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-            }
-
-            return result;
-        }
-
-        public async Task<object> OnInlineQuery(InlineQueryEventArgs e)
-        {
-            InlineQuery inline = e.InlineQuery;
-            object result = null;
-
-            try
-            {
-                result = await InvokeInline(MethodType.Inline, inline);
-
-                MessageMiddleware messageMiddleware = _provider.GetService<MessageMiddleware>();
-                if (messageMiddleware != null)
+                else if (update.InlineQuery != null)
                 {
-                    messageMiddleware.AfterInlineProcessed(e.InlineQuery.From.Id);
-                    await messageMiddleware.AfterInlineProcessedAsync(e.InlineQuery.From.Id);
+                    result = await InvokeInline(MethodType.Inline, update.InlineQuery);
+
+                    if (messageMiddleware != null)
+                    {
+                        messageMiddleware.AfterInlineProcessed(update.InlineQuery.From.Id);
+                        await messageMiddleware.AfterInlineProcessedAsync(update.InlineQuery.From.Id);
+                    }
                 }
             }
             catch (Exception ex)

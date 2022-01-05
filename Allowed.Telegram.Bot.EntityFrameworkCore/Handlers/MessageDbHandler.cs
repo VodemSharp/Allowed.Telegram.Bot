@@ -17,9 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
@@ -202,69 +202,49 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers
             return null;
         }
 
-        public async Task<object> OnMessage(MessageEventArgs e, TKey botId)
+        public async Task<object> OnUpdate(ITelegramBotClient client, Update update, TKey botId, CancellationToken token)
         {
-            Message message = e.Message;
             object result = null;
+            MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
 
             try
             {
-                result = await InvokeMethod(GetMethodType(message), message, botId);
-
-                MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
-                if (messageMiddleware != null)
+                if (update.Message != null)
                 {
-                    messageMiddleware.AfterMessageProcessed(botId, e.Message.From.Id);
-                    await messageMiddleware.AfterMessageProcessedAsync(botId, e.Message.From.Id);
+                    await _userService.CheckUser(update.Message.From);
+
+                    result = await InvokeMethod(GetMethodType(update.Message), update.Message, botId);
+
+                    if (messageMiddleware != null)
+                    {
+                        messageMiddleware.AfterMessageProcessed(botId, update.Message.From.Id);
+                        await messageMiddleware.AfterMessageProcessedAsync(botId, update.Message.From.Id);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-            }
-
-            return result;
-        }
-
-        public async Task<object> OnCallbackQuery(CallbackQueryEventArgs e, TKey botId)
-        {
-            CallbackQuery callback = e.CallbackQuery;
-            object result = null;
-
-            try
-            {
-                if (e.CallbackQuery.Data != null)
-                    result = await InvokeCallback(MethodType.Callback, callback, botId);
-
-                MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
-                if (messageMiddleware != null)
+                else if (update.CallbackQuery != null)
                 {
-                    messageMiddleware.AfterCallbackProcessed(botId, e.CallbackQuery.From.Id);
-                    await messageMiddleware.AfterCallbackProcessedAsync(botId, e.CallbackQuery.From.Id);
+                    await _userService.CheckUser(update.CallbackQuery.From);
+
+                    if (update.CallbackQuery.Data != null)
+                        result = await InvokeCallback(MethodType.Callback, update.CallbackQuery, botId);
+
+                    if (messageMiddleware != null)
+                    {
+                        messageMiddleware.AfterCallbackProcessed(botId, update.CallbackQuery.From.Id);
+                        await messageMiddleware.AfterCallbackProcessedAsync(botId, update.CallbackQuery.From.Id);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-            }
-
-            return result;
-        }
-
-        public async Task<object> OnInlineQuery(InlineQueryEventArgs e, TKey botId)
-        {
-            InlineQuery inline = e.InlineQuery;
-            object result = null;
-
-            try
-            {
-                result = await InvokeInline(MethodType.Inline, inline, botId);
-
-                MessageDbMiddleware<TKey> messageMiddleware = _provider.GetService<MessageDbMiddleware<TKey>>();
-                if (messageMiddleware != null)
+                else if (update.InlineQuery != null)
                 {
-                    messageMiddleware.AfterInlineProcessed(botId, inline.From.Id);
-                    await messageMiddleware.AfterInlineProcessedAsync(botId, inline.From.Id);
+                    await _userService.CheckUser(update.InlineQuery.From);
+
+                    result = await InvokeInline(MethodType.Inline, update.InlineQuery, botId);
+
+                    if (messageMiddleware != null)
+                    {
+                        messageMiddleware.AfterInlineProcessed(botId, update.InlineQuery.From.Id);
+                        await messageMiddleware.AfterInlineProcessedAsync(botId, update.InlineQuery.From.Id);
+                    }
                 }
             }
             catch (Exception ex)

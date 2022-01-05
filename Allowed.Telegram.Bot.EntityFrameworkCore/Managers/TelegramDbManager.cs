@@ -93,74 +93,28 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                 {
                     TKey botId = bots.GetValueOrDefault(client.BotData.Name);
 
-                    client.Client.OnMessage += async (a, b) =>
+                    IUserService<TKey, TUser> userService = GetUserService(botId);
+                    IRoleService<TKey, TRole> roleService = GetRoleService(botId);
+
+                    MessageDbHandler<TKey, TUser, TRole> messageHandler =
+                        GetMessageHandler(userService, roleService, client.Client, client.BotData);
+
+                    client.Client.StartReceiving(
+                        async (client, update, token) => await messageHandler.OnUpdate(client, update, botId, token),
+                        (client, exception, token) => _logger.LogError(exception.ToString()),
+                        cancellationToken: stoppingToken);
+
+                    client.Client.OnApiResponseReceived += async (client, args, cancellationToken) =>
                     {
                         try
                         {
-                            IUserService<TKey, TUser> userService = GetUserService(botId);
-                            IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-
-                            MessageDbHandler<TKey, TUser, TRole> messageHandler =
-                                GetMessageHandler(userService, roleService, client.Client, client.BotData);
-
-                            await userService.CheckUser(b.Message.From);
-                            await messageHandler.OnMessage(b, botId);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex.ToString());
-                        }
-                    };
-
-                    client.Client.OnCallbackQuery += async (a, b) =>
-                    {
-                        try
-                        {
-                            IUserService<TKey, TUser> userService = GetUserService(botId);
-                            IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-
-                            MessageDbHandler<TKey, TUser, TRole> messageHandler =
-                                GetMessageHandler(userService, roleService, client.Client, client.BotData);
-
-                            await userService.CheckUser(b.CallbackQuery.From);
-                            await messageHandler.OnCallbackQuery(b, botId);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex.ToString());
-                        }
-                    };
-
-                    client.Client.OnInlineQuery += async (a, b) =>
-                    {
-                        try
-                        {
-                            IUserService<TKey, TUser> userService = GetUserService(botId);
-                            IRoleService<TKey, TRole> roleService = GetRoleService(botId);
-
-                            MessageDbHandler<TKey, TUser, TRole> messageHandler =
-                                GetMessageHandler(userService, roleService, client.Client, client.BotData);
-
-                            await userService.CheckUser(b.InlineQuery.From);
-                            await messageHandler.OnInlineQuery(b, botId);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex.ToString());
-                        }
-                    };
-
-                    client.Client.ApiResponseReceived += async (a, b) =>
-                    {
-                        try
-                        {
-                            if (b.ResponseMessage.StatusCode == HttpStatusCode.Forbidden)
+                            if (args.ResponseMessage.StatusCode == HttpStatusCode.Forbidden)
                             {
-                                string response = await b.ResponseMessage.Content.ReadAsStringAsync();
+                                string response = await args.ResponseMessage.Content.ReadAsStringAsync();
 
                                 if (response == "{\"ok\":false,\"error_code\":403,\"description\":\"Forbidden: bot was blocked by the user\"}")
                                 {
-                                    string request = await b.ApiRequestEventArgs.HttpContent.ReadAsStringAsync();
+                                    string request = await args.ApiRequestEventArgs.HttpContent.ReadAsStringAsync();
                                     long telegramId = JsonSerializer.Deserialize<JsonElement>(request).GetProperty("chat_id").GetInt64();
 
                                     IUserService<TKey, TUser> userService = GetUserService(botId);
@@ -173,8 +127,6 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers
                             _logger.LogError(ex.ToString());
                         }
                     };
-
-                    client.Client.StartReceiving(cancellationToken: stoppingToken);
                 }
 
                 await Task.Delay(Timeout.Infinite, stoppingToken);

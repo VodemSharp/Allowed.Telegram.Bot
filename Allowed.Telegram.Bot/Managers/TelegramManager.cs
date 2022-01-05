@@ -9,6 +9,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Extensions.Polling;
 
 namespace Allowed.Telegram.Bot.Managers
 {
@@ -47,11 +48,10 @@ namespace Allowed.Telegram.Bot.Managers
             {
                 MessageHandler messageHandler = GetMessageHandler(client.Client, client.BotData);
 
-                client.Client.OnMessage += async (a, b) => await messageHandler.OnMessage(b);
-                client.Client.OnCallbackQuery += async (a, b) => await messageHandler.OnCallbackQuery(b);
-                client.Client.OnInlineQuery += async (a, b) => await messageHandler.OnInlineQuery(b);
-
-                client.Client.StartReceiving(cancellationToken: stoppingToken);
+                ReceiverOptions receiverOptions = new() { AllowedUpdates = { } };
+                client.Client.StartReceiving(async (client, update, token) => await messageHandler.OnUpdate(client, update, token),
+                    (client, exception, token) => _logger.LogError(exception.ToString()),
+                    receiverOptions, cancellationToken: stoppingToken);
             }
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
