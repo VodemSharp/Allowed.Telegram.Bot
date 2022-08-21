@@ -1,35 +1,28 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
-namespace Allowed.Telegram.Bot.Helpers
+namespace Allowed.Telegram.Bot.Helpers;
+
+public static class MethodHelper
 {
-    public static class MethodHelper
+    private static bool IsAsyncMethod(MethodInfo method)
     {
-        private static bool IsAsyncMethod(MethodInfo method)
+        return method.GetCustomAttribute(typeof(AsyncStateMachineAttribute)) != null;
+    }
+
+    public static async Task<object> InvokeMethod(MethodInfo method, List<object> parameters, object instance)
+    {
+        if (IsAsyncMethod(method))
         {
-            return (method.GetCustomAttribute(typeof(AsyncStateMachineAttribute)) != null);
+            if (method.ReturnType == typeof(Task))
+            {
+                await (Task)method.Invoke(instance, parameters.ToArray());
+                return null;
+            }
+
+            return await (Task<object>)method.Invoke(instance, parameters.ToArray());
         }
 
-        public static async Task<object> InvokeMethod(MethodInfo method, List<object> parameters, object instance)
-        {
-            if (IsAsyncMethod(method))
-            {
-                if (method.ReturnType == typeof(Task))
-                {
-                    await(Task)method.Invoke(instance, parameters.ToArray());
-                    return null;
-                }
-                else
-                {
-                    return await(Task<object>)method.Invoke(instance, parameters.ToArray());
-                }
-            }
-            else
-            {
-                return method.Invoke(instance, parameters.ToArray());
-            }
-        }
+        return method.Invoke(instance, parameters.ToArray());
     }
 }

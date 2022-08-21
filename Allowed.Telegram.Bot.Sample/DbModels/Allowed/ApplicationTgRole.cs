@@ -1,8 +1,7 @@
 ﻿using Allowed.Telegram.Bot.Data.Models;
 
-namespace Allowed.Telegram.Bot.Sample.DbModels.Allowed
+namespace Allowed.Telegram.Bot.Sample.DbModels.Allowed;
+
+public class ApplicationTgRole : TelegramRole<int>
 {
-    public class ApplicationTgRole : TelegramRole<int>
-    {
-    }
 }

@@ -1,10 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
-namespace Allowed.Telegram.Bot.Models
+namespace Allowed.Telegram.Bot.Models;
+
+public class CallbackQueryModel
 {
-    public class CallbackQueryModel
-    {
-        [JsonProperty("p")]
-        public string Path { get; set; }
-    }
+    [JsonPropertyName("p")] public string Path { get; set; }
 }

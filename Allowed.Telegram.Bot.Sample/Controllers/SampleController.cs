@@ -4,66 +4,55 @@ using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.DbModels.Allowed;
-using System;
-using System.Threading.Tasks;
 using Telegram.Bot;
 
-namespace Allowed.Telegram.Bot.Sample.Controllers
+namespace Allowed.Telegram.Bot.Sample.Controllers;
+
+[BotName("Sample")]
+public class SampleController : CommandController<int>
 {
-    [BotName("Sample")]
-    public class SampleController : CommandController<int>
+    private IRoleService<int, ApplicationTgRole> _roleService;
+
+    public override void Initialize(IServiceFactory factory, long telegramId)
     {
-        private IRoleService<int, ApplicationTgRole> _roleService;
+        _roleService = factory.CreateRoleService<int, ApplicationTgRole>(BotId);
+    }
 
-        public override void Initialize(IServiceFactory factory, long telegramId)
+    [Command("start")]
+    public async Task Start(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You pressed: /start");
+    }
+
+    [Command("add_admin_role")]
+    public async Task AddAdminRole(MessageData data)
+    {
+        if (!await _roleService.AnyRole("admin")) await _roleService.AddRole(new ApplicationTgRole { Name = "admin" });
+
+        if (await _roleService.AnyUserRole(data.Message.From!.Id, "admin"))
         {
-            _roleService = factory.CreateRoleService<int, ApplicationTgRole>(BotId);
+            await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You already have admin role!");
         }
-
-        [Command("start")]
-        public async Task Start(MessageData data)
+        else
         {
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed: /start");
+            await _roleService.AddUserRole(data.Message.From!.Id, "admin");
+            await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You add admin role!");
         }
+    }
 
-        [Command("add_admin_role")]
-        public async Task AddAdminRole(MessageData data)
-        {
-            if (!await _roleService.AnyRole("admin"))
-            {
-                await _roleService.AddRole(new ApplicationTgRole { Name = "admin" });
-            }
+    [Command("remove_admin_role")]
+    public async Task RemoveAdminRole(MessageData data)
+    {
+        if (await _roleService.AnyUserRole(data.Message.From!.Id, "admin"))
+            await _roleService.RemoveUserRole(data.Message.From!.Id, "admin");
 
-            if (await _roleService.AnyUserRole(data.Message.Chat.Id, "admin"))
-            {
-                await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You already have admin role!");
-            }
-            else
-            {
-                await _roleService.AddUserRole(data.Message.Chat.Id, "admin");
-                await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You add admin role!");
-            }
-        }
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You remove admin role!");
+    }
 
-        [Command("remove_admin_role")]
-        public async Task RemoveAdminRole(MessageData data)
-        {
-            if (await _roleService.AnyUserRole(data.Message.Chat.Id, "admin"))
-                await _roleService.RemoveUserRole(data.Message.Chat.Id, "admin");
-
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You remove admin role!");
-        }
-
-        [DefaultCommand]
-        public async Task DefaultCommand(MessageData data)
-        {
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed unknown command: {data.Message.Text}");
-        }
-
-        [Command("exception")]
-        public Task Exception(MessageData data)
-        {
-            throw new NotImplementedException();
-        }
+    [DefaultCommand]
+    public async Task DefaultCommand(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id,
+            $"You pressed unknown command: {data.Message.Text}");
     }
 }

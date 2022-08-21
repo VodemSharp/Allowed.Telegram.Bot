@@ -1,11 +1,9 @@
-﻿using Allowed.Telegram.Bot.Models;
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
+using Allowed.Telegram.Bot.Models;
 
-namespace Allowed.Telegram.Bot.Sample.Models
+namespace Allowed.Telegram.Bot.Sample.Models;
+
+public class TestCallbackQueryModel : CallbackQueryModel
 {
-    public class TestCallbackQueryModel : CallbackQueryModel
-    {
-        [JsonProperty("a")]
-        public bool SomeData { get; set; }
-    }
+    [JsonPropertyName("a")] public bool SomeData { get; set; }
 }

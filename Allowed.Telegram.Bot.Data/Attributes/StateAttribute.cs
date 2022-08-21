@@ -1,20 +1,19 @@
 ﻿using System;
 
-namespace Allowed.Telegram.Bot.Data.Attributes
+namespace Allowed.Telegram.Bot.Data.Attributes;
+
+[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+public class StateAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
-    public class StateAttribute : Attribute
+    private readonly string _state;
+
+    public StateAttribute(string state)
     {
-        private readonly string _state;
+        _state = state;
+    }
 
-        public StateAttribute(string state)
-        {
-            _state = state;
-        }
-
-        public string GetState()
-        {
-            return _state;
-        }
+    public string GetState()
+    {
+        return _state;
     }
 }

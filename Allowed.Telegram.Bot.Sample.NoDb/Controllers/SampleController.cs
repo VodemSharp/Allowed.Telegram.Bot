@@ -1,30 +1,29 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Models;
-using System.Threading.Tasks;
 using Telegram.Bot;
 
-namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers
+namespace Allowed.Telegram.Bot.Sample.NoDb.Controllers;
+
+[BotName("Sample")]
+public class SampleController : CommandController
 {
-    [BotName("Sample")]
-    public class SampleController : CommandController
+    [Command("start")]
+    public async Task Start(MessageData data)
     {
-        [Command("start")]
-        public async Task Start(MessageData data)
-        {
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed: /start");
-        }
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You pressed: /start");
+    }
 
-        [DefaultCommand]
-        public async Task DefaultCommand(MessageData data)
-        {
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You pressed unknown command: {data.Message.Text}");
-        }
+    [DefaultCommand]
+    public async Task DefaultCommand(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id,
+            $"You pressed unknown command: {data.Message.Text}");
+    }
 
-        [TextCommand]
-        public async Task TextCommand(MessageData data)
-        {
-            await data.Client.SendTextMessageAsync(data.Message.Chat.Id, $"You say: {data.Message.Text}");
-        }
+    [TextCommand]
+    public async Task TextCommand(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, $"You say: {data.Message.Text}");
     }
 }

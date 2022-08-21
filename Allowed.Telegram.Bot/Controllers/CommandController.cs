@@ -1,10 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿namespace Allowed.Telegram.Bot.Controllers;
 
-namespace Allowed.Telegram.Bot.Controllers
+public abstract class CommandController
 {
-    public abstract class CommandController
-    {
-        public virtual void Initialize(long telegramId) { }
-        public virtual Task InitializeAsync(long telegramId) { return Task.CompletedTask; }
-    }
+    public virtual void Initialize(long telegramId) { }
+    public virtual Task InitializeAsync(long telegramId) => Task.CompletedTask;
 }

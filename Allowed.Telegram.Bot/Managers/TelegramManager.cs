@@ -1,60 +1,64 @@
 ﻿using Allowed.Telegram.Bot.Extensions.Collections;
-using Allowed.Telegram.Bot.Extensions.Collections.Items;
 using Allowed.Telegram.Bot.Handlers;
 using Allowed.Telegram.Bot.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Types;
 
-namespace Allowed.Telegram.Bot.Managers
+namespace Allowed.Telegram.Bot.Managers;
+
+public class TelegramManager : BackgroundService
 {
-    public class TelegramManager : BackgroundService
+    protected readonly ControllersCollection ControllersCollection;
+    protected readonly ILogger<TelegramManager> Logger;
+
+    protected IServiceProvider Services { get; }
+    
+    public TelegramManager(IServiceProvider services,
+        ControllersCollection controllersCollection,
+        ILoggerFactory loggerFactory)
     {
-        protected readonly ControllersCollection _controllersCollection;
-        protected readonly ILogger<TelegramManager> _logger;
+        Services = services;
 
-        public TelegramManager(IServiceProvider services,
-            ControllersCollection controllersCollection,
-            ILoggerFactory loggerFactory)
+        ControllersCollection = controllersCollection;
+        Logger = loggerFactory.CreateLogger<TelegramManager>();
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        await DoWork(stoppingToken);
+    }
+
+    private MessageHandler GetMessageHandler(ITelegramBotClient client, BotData botData)
+    {
+        return new MessageHandler(ControllersCollection, client, botData, Services);
+    }
+
+    protected virtual async Task DoWork(CancellationToken stoppingToken)
+    {
+        var clientsCollection = Services.GetService<ClientsCollection>();
+
+        foreach (var client in clientsCollection!.Clients)
         {
-            Services = services;
+            var messageHandler = GetMessageHandler(client.Client, client.BotData);
 
-            _controllersCollection = controllersCollection;
-            _logger = loggerFactory.CreateLogger<TelegramManager>();
-        }
+            var receiverOptions = new ReceiverOptions();
 
-        protected IServiceProvider Services { get; }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            await DoWork(stoppingToken);
-        }
-
-        private MessageHandler GetMessageHandler(ITelegramBotClient client, BotData botData)
-        {
-            return new MessageHandler(_controllersCollection, client, botData, Services);
-        }
-
-        protected virtual async Task DoWork(CancellationToken stoppingToken)
-        {
-            ClientsCollection clientsCollection = Services.GetService<ClientsCollection>();
-
-            foreach (ClientItem client in clientsCollection.Clients)
+            async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token)
             {
-                MessageHandler messageHandler = GetMessageHandler(client.Client, client.BotData);
-
-                ReceiverOptions receiverOptions = new() { AllowedUpdates = { } };
-                client.Client.StartReceiving(async (client, update, token) => await messageHandler.OnUpdate(client, update, token),
-                    (client, exception, token) => _logger.LogError(exception.ToString()),
-                    receiverOptions, cancellationToken: stoppingToken);
+                await messageHandler.OnUpdate(tgClient, update, token);
             }
 
-            await Task.Delay(Timeout.Infinite, stoppingToken);
+            await client.Client.DeleteWebhookAsync(cancellationToken: stoppingToken);
+            client.Client.StartReceiving(UpdateHandler,
+                (tgClient, exception, _) => Logger.LogError("{botId}:\n{exception}",
+                    tgClient.BotId, exception.ToString()),
+                receiverOptions, stoppingToken);
         }
+
+        await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 }

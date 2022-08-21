@@ -1,7 +1,11 @@
-﻿namespace Allowed.Telegram.Bot.Models.Enums
+﻿namespace Allowed.Telegram.Bot.Models.Enums;
+
+public enum MethodType
 {
-    public enum MethodType
-    {
-        ByPath, ByType, Text, Inline, Callback, Update
-    }
+    ByPath,
+    ByType,
+    Text,
+    Inline,
+    Callback,
+    Update
 }

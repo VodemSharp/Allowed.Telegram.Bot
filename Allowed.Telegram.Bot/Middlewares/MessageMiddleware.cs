@@ -1,15 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿namespace Allowed.Telegram.Bot.Middlewares;
 
-namespace Allowed.Telegram.Bot.Middlewares
+public abstract class MessageMiddleware
 {
-    public abstract class MessageMiddleware
-    {
-        public Task AfterMessageProcessedAsync(long telegramId) { return Task.CompletedTask; }
-        public Task AfterCallbackProcessedAsync(long telegramId) { return Task.CompletedTask; }
-        public Task AfterInlineProcessedAsync(long telegramId) { return Task.CompletedTask; }
+    public virtual Task AfterMessageProcessedAsync(long telegramId) => Task.CompletedTask;
+    public virtual Task AfterCallbackProcessedAsync(long telegramId) => Task.CompletedTask;
+    public virtual Task AfterInlineProcessedAsync(long telegramId) => Task.CompletedTask;
 
-        public void AfterMessageProcessed(long telegramId) { }
-        public void AfterCallbackProcessed(long telegramId) { }
-        public void AfterInlineProcessed(long telegramId) { }
-    }
+    public virtual void AfterMessageProcessed(long telegramId) { }
+    public virtual void AfterCallbackProcessed(long telegramId) { }
+    public virtual void AfterInlineProcessed(long telegramId) { }
 }

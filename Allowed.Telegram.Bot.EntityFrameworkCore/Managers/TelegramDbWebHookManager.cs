@@ -4,21 +4,25 @@ using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Models;
 using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Builders;
+using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Handlers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Managers;
 using Allowed.Telegram.Bot.Models;
+using Allowed.Telegram.Bot.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers;
 
-public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
+public class TelegramDbWebHookManager<TKey, TUser, TRole, TBot> : TelegramWebHookManager
     where TKey : IEquatable<TKey>
     where TUser : TelegramUser<TKey>
     where TRole : TelegramRole<TKey>
@@ -26,37 +30,18 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
 {
     private readonly IServiceFactory _serviceFactory;
 
-    public TelegramDbManager(IServiceProvider services,
-        ControllersCollection controllersCollection,
-        ILoggerFactory loggerFactory)
-        : base(services, controllersCollection, loggerFactory)
+    public TelegramDbWebHookManager(IServiceProvider services,
+        ILoggerFactory loggerFactory,
+        IOptions<TelegramWebHookOptions> telegramWebHookOptions)
+        : base(services, loggerFactory, telegramWebHookOptions)
     {
         _serviceFactory = (IServiceFactory)services.GetService(typeof(IServiceFactory));
     }
 
-    private IUserService<TKey, TUser> GetUserService(TKey botId)
+    private async Task InitializeBots(IEnumerable<string> botNames)
     {
-        return _serviceFactory.CreateUserService<TKey, TUser>(botId);
-    }
-
-    private IRoleService<TKey, TRole> GetRoleService(TKey botId)
-    {
-        return _serviceFactory.CreateRoleService<TKey, TRole>(botId);
-    }
-
-    private MessageDbHandler<TKey, TUser, TRole> GetMessageHandler(
-        IUserService<TKey, TUser> userService,
-        IRoleService<TKey, TRole> roleService,
-        ITelegramBotClient client, BotData botData)
-    {
-        return new MessageDbHandler<TKey, TUser, TRole>(ControllersCollection,
-            client, botData, userService, roleService, Services);
-    }
-
-    private async Task<Dictionary<string, TKey>> InitializeBots(IEnumerable<string> botNames)
-    {
+        var botsCollection = Services.GetRequiredService<BotsCollection<TKey>>();
         var options = Services.GetRequiredService<ContextOptions>();
-        var result = new Dictionary<string, TKey>();
 
         await using var db = (DbContext)Services.GetRequiredService(options.ContextType);
         foreach (var botName in botNames)
@@ -67,10 +52,9 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
                 await db.SaveChangesAsync();
             }
 
-            result.Add(botName, (await db.Set<TBot>().OrderBy(b => b.Id).SingleAsync(b => b.Name == botName)).Id);
+            botsCollection.Values.Add(botName,
+                (await db.Set<TBot>().OrderBy(b => b.Id).SingleAsync(b => b.Name == botName)).Id);
         }
-
-        return result;
     }
 
     protected override async Task DoWork(CancellationToken stoppingToken)
@@ -78,31 +62,20 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
         try
         {
             var clientsCollection = Services.GetRequiredService<ClientsCollection>();
-            var bots =
-                await InitializeBots(clientsCollection.Clients.Select(c => c.BotData.Name));
+            await InitializeBots(clientsCollection.Clients.Select(c => c.BotData.Name));
 
             foreach (var client in clientsCollection.Clients)
             {
-                var botId = bots.GetValueOrDefault(client.BotData.Name);
+                var webhookAddress = @$"{client.BotData.Host}/{Route}/{client.BotData.Token}";
 
-                var userService = GetUserService(botId);
-                var roleService = GetRoleService(botId);
+                if (TelegramWebHookOptions.DeleteOldHooks)
+                    await client.Client.DeleteWebhookAsync(cancellationToken: stoppingToken);
+                await client.Client.SetWebhookAsync(
+                    webhookAddress,
+                    allowedUpdates: Array.Empty<UpdateType>(),
+                    cancellationToken: stoppingToken);
 
-                var messageHandler =
-                    GetMessageHandler(userService, roleService, client.Client, client.BotData);
-
-                async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token) =>
-                    await messageHandler.OnUpdate(tgClient, update, botId, token);
-
-                var receiverOptions = new ReceiverOptions();
-
-                await client.Client.DeleteWebhookAsync(cancellationToken: stoppingToken);
-                client.Client.StartReceiving(UpdateHandler,
-                    (tgClient, exception, _) => Logger.LogError("{botId}:\n{exception}",
-                        tgClient.BotId, exception.ToString()),
-                    receiverOptions, stoppingToken);
-
-                client.Client.OnApiResponseReceived += async (_, args, cancellationToken) =>
+                client.Client.OnApiResponseReceived += async (tgClient, args, cancellationToken) =>
                 {
                     try
                     {
@@ -116,10 +89,19 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
                                 var request =
                                     await args.ApiRequestEventArgs.HttpRequestMessage?.Content?.ReadAsStringAsync(
                                         cancellationToken)!;
+                                
                                 var telegramId = JsonSerializer.Deserialize<JsonElement>(request)
                                     .GetProperty("chat_id").GetInt64();
 
-                                await GetUserService(botId).BlockBot(telegramId);
+                                await using var scope = Services.CreateAsyncScope();
+                                var botsCollections = scope.ServiceProvider.GetRequiredService<BotsCollection<TKey>>();
+                                
+                                if (tgClient.BotId != null)
+                                {
+                                    var botId = botsCollections.Values[client.BotData.Name];
+                                    var userService = _serviceFactory.CreateUserService<TKey, TUser>(botId);
+                                    await userService.BlockBot(telegramId);
+                                }
                             }
                         }
                     }

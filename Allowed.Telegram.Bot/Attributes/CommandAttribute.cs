@@ -1,20 +1,17 @@
-﻿using System;
+﻿namespace Allowed.Telegram.Bot.Attributes;
 
-namespace Allowed.Telegram.Bot.Attributes
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class CommandAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class CommandAttribute : Attribute
+    private readonly string _path;
+
+    public CommandAttribute(string path)
     {
-        private readonly string _path;
+        _path = path;
+    }
 
-        public CommandAttribute(string path)
-        {
-            _path = path;
-        }
-
-        public string GetPath()
-        {
-            return _path;
-        }
+    public string GetPath()
+    {
+        return _path;
     }
 }

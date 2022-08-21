@@ -3,33 +3,39 @@ using Allowed.Telegram.Bot.Extensions;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.Contexts;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
-namespace Allowed.Telegram.Bot.Sample.NoDb
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers().AddNewtonsoftJson();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var connection = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection),
+    ServiceLifetime.Transient, ServiceLifetime.Transient);
+
+builder.Services.AddTelegramClients(builder.Configuration.GetSection("Telegram:Bots").Get<BotData[]>())
+    .AddTelegramStore<ApplicationDbContext>();
+
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddTelegramDbManager();
+else
+    builder.Services.AddTelegramDbWebHookManager();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .UseWindowsService()
-                .ConfigureServices((hostContext, services) =>
-                {
-                    IConfiguration config = hostContext.Configuration;
-
-                    string connection = config.GetConnectionString("DefaultConnection");
-                    services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection),
-                        ServiceLifetime.Transient, ServiceLifetime.Transient);
-
-                    services.AddTelegramClients(config.GetSection("Telegram:Bots").Get<BotData[]>())
-                        .AddTelegramStore<ApplicationDbContext>()
-                        .AddTelegramDbManager();
-                });
-    }
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
