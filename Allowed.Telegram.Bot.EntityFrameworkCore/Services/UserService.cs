@@ -131,7 +131,7 @@ public class UserService<TKey, TUser> : IUserService<TKey, TUser>
             join bu in _botUsers on u.Id equals bu.TelegramUserId
             where bu.TelegramBotId.Equals(_botId) && u.TelegramId == telegramId
             orderby u.Id
-            select u).Cast<TUser>().SingleAsync();
+            select u).Cast<TUser>().SingleOrDefaultAsync();
     }
 
     public async Task<TUser> GetUser(string username)
@@ -143,7 +143,7 @@ public class UserService<TKey, TUser> : IUserService<TKey, TUser>
             join bu in _botUsers on u.Id equals bu.TelegramUserId
             where bu.TelegramBotId.Equals(_botId) && u.Username == username
             orderby u.Id
-            select u).Cast<TUser>().SingleAsync();
+            select u).Cast<TUser>().SingleOrDefaultAsync();
     }
 
     public async Task<TKey> GetBotUserId(long telegramId)
@@ -201,12 +201,12 @@ public class UserService<TKey, TUser> : IUserService<TKey, TUser>
 
     private async Task<TUser> GetTelegramUser(long telegramId)
     {
-        return await _db.Set<TUser>().OrderBy(u => u.Id).SingleAsync(u => u.TelegramId == telegramId);
+        return await _db.Set<TUser>().OrderBy(u => u.Id).SingleOrDefaultAsync(u => u.TelegramId == telegramId);
     }
 
     private async Task<TUser> GetTelegramUser(string username)
     {
-        return await _db.Set<TUser>().OrderBy(u => u.Id).SingleAsync(u => u.Username == username);
+        return await _db.Set<TUser>().OrderBy(u => u.Id).SingleOrDefaultAsync(u => u.Username == username);
     }
 
     private IQueryable<TelegramBotUser<TKey>> GetBotUserQuery(long telegramId)
