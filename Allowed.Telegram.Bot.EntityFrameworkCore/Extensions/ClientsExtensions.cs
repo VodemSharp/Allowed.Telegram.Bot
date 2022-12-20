@@ -24,11 +24,11 @@ public static class ClientsExtensions
                     .ToList()
             });
     }
-    
+
     public static IServiceCollection AddTelegramDbManager(this IServiceCollection services)
     {
         AddCollections(services);
-        
+
         services.AddHostedService(provider =>
         {
             var options = provider.GetRequiredService<ContextOptions>();
@@ -40,7 +40,7 @@ public static class ClientsExtensions
 
         return services;
     }
-    
+
     public static IServiceCollection AddTelegramDbWebHookManager(this IServiceCollection services)
     {
         AddCollections(services);

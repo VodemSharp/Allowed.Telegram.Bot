@@ -15,8 +15,6 @@ public class TelegramManager : BackgroundService
     protected readonly ControllersCollection ControllersCollection;
     protected readonly ILogger<TelegramManager> Logger;
 
-    protected IServiceProvider Services { get; }
-    
     public TelegramManager(IServiceProvider services,
         ControllersCollection controllersCollection,
         ILoggerFactory loggerFactory)
@@ -27,14 +25,16 @@ public class TelegramManager : BackgroundService
         Logger = loggerFactory.CreateLogger<TelegramManager>();
     }
 
+    protected IServiceProvider Services { get; }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await DoWork(stoppingToken);
     }
 
-    private MessageHandler GetMessageHandler(ITelegramBotClient client, BotData botData)
+    private MessageHandler GetMessageHandler(ITelegramBotClient client, SimpleTelegramBotClientOptions options)
     {
-        return new MessageHandler(ControllersCollection, client, botData, Services);
+        return new MessageHandler(ControllersCollection, client, options, Services);
     }
 
     protected virtual async Task DoWork(CancellationToken stoppingToken)
@@ -43,7 +43,7 @@ public class TelegramManager : BackgroundService
 
         foreach (var client in clientsCollection!.Clients)
         {
-            var messageHandler = GetMessageHandler(client.Client, client.BotData);
+            var messageHandler = GetMessageHandler(client.Client, client.Options);
 
             var receiverOptions = new ReceiverOptions();
 

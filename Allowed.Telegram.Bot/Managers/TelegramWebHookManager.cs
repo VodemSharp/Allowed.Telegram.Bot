@@ -11,12 +11,11 @@ namespace Allowed.Telegram.Bot.Managers;
 
 public class TelegramWebHookManager : BackgroundService
 {
+    private const string DefaultRoute = "telegram";
+    protected readonly ILogger<TelegramWebHookManager> Logger;
     protected readonly string Route;
     protected readonly IServiceProvider Services;
     protected readonly TelegramWebHookOptions TelegramWebHookOptions;
-    protected readonly ILogger<TelegramWebHookManager> Logger;
-
-    private const string DefaultRoute = "telegram";
 
     public TelegramWebHookManager(IServiceProvider services,
         ILoggerFactory loggerFactory, IOptions<TelegramWebHookOptions> telegramWebHookOptions)
@@ -49,7 +48,7 @@ public class TelegramWebHookManager : BackgroundService
 
         foreach (var client in clientsCollection!.Clients)
         {
-            var webhookAddress = @$"{client.BotData.Host}/{Route}/{client.BotData.Token}";
+            var webhookAddress = @$"{client.Options.Host}/{Route}/{client.Options.Token}";
 
             if (TelegramWebHookOptions.DeleteOldHooks)
                 await client.Client.DeleteWebhookAsync(cancellationToken: stoppingToken);

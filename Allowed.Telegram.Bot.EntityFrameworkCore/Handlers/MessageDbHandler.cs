@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Helpers;
@@ -12,7 +13,6 @@ using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -26,9 +26,10 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
     private readonly IRoleService<TKey, TRole> _roleService;
     private readonly IUserService<TKey, TUser> _userService;
 
-    public MessageDbHandler(ControllersCollection collection, ITelegramBotClient client, BotData botData,
+    public MessageDbHandler(ControllersCollection collection, ITelegramBotClient client,
+        SimpleTelegramBotClientOptions options,
         IUserService<TKey, TUser> userService, IRoleService<TKey, TRole> roleService, IServiceProvider provider)
-        : base(collection, client, botData, provider)
+        : base(collection, client, options, provider)
     {
         _userService = userService;
         _roleService = roleService;
@@ -72,10 +73,12 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
             var userState = await GetStateValue(message.From!.Id);
 
             if (!string.IsNullOrEmpty(userState))
-                method = textMethods.SingleOrDefault(m => m.GetStateAttributes().Any(s => s.GetState() == userState));
+                method = textMethods.Where(m => m.GetStateAttributes().Any(s => s.GetState() == userState))
+                    .MaxBy(m => m.GetTextCommandAttributes().Count(a => a.GetText() == message.Text));
 
             if (method == null)
-                method = textMethods.SingleOrDefault(m => !m.GetStateAttributes().Any());
+                method = textMethods.Where(m => !m.GetStateAttributes().Any())
+                    .MaxBy(m => m.GetTextCommandAttributes().Count(a => a.GetText() == message.Text));
         }
 
         return method;
@@ -95,7 +98,7 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
                 {
                     Message = message,
                     Client = Client,
-                    BotData = BotData
+                    Options = Options
                 });
 
             var controller = (CommandController<TKey>)ActivatorUtilities
@@ -128,16 +131,16 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
                 {
                     Client = Client,
                     CallbackQuery = callback,
-                    BotData = BotData
+                    Options = Options
                 });
 
             var callbackType = typeof(CallbackQueryModel);
 
             if (methodParams.Any(p => p.ParameterType == callbackType))
-                parameters.Add(JsonConvert.DeserializeObject(callback.Data, callbackType));
+                parameters.Add(JsonSerializer.Deserialize(callback.Data, callbackType));
 
             if (methodParams.Any(p => p.ParameterType.IsSubclassOf(callbackType)))
-                parameters.Add(JsonConvert.DeserializeObject(
+                parameters.Add(JsonSerializer.Deserialize(
                     callback.Data, methodParams.Single(p => p.ParameterType.IsSubclassOf(callbackType)).ParameterType));
 
             var controller = (CommandController<TKey>)ActivatorUtilities
@@ -170,7 +173,7 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
                 {
                     InlineQuery = inline,
                     Client = Client,
-                    BotData = BotData
+                    Options = Options
                 });
 
             var controller = (CommandController<TKey>)ActivatorUtilities

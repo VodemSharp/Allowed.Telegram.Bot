@@ -33,15 +33,15 @@ public class TelegramDbControllerBase<TKey, TUser, TRole> : ControllerBase
     [HttpPost("{token}")]
     public async Task Post([FromBody] Update update, string token)
     {
-        var client = _clientsCollection.Clients.Single(c => c.BotData.Token == token);
+        var client = _clientsCollection.Clients.Single(c => c.Options.Token == token);
 
-        var botId = _botsCollection.Values.GetValueOrDefault(client.BotData.Name);
+        var botId = _botsCollection.Values.GetValueOrDefault(client.Options.Name);
 
         var userService = _serviceFactory.CreateUserService<TKey, TUser>(botId);
         var roleService = _serviceFactory.CreateRoleService<TKey, TRole>(botId);
 
         var messageHandler = new MessageDbHandler<TKey, TUser, TRole>(_controllersCollection,
-            client.Client, client.BotData, userService, roleService, _serviceProvider);
+            client.Client, client.Options, userService, roleService, _serviceProvider);
 
         await messageHandler.OnUpdate(client.Client, update, botId, new CancellationToken());
     }

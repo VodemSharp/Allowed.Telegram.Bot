@@ -40,7 +40,7 @@ public class StateController : CommandController<int>
         await _userService.SetState(messageData.Message.From!.Id, "Test2State");
         await messageData.Client.SendTextMessageAsync(messageData.Message.From!.Id, "Test2 state setted!");
     }
-    
+
     [Command("set_state_test3")]
     public async Task SetTest3State(MessageData messageData)
     {

@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using Allowed.Telegram.Bot.Controllers;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Helpers;
@@ -7,7 +8,6 @@ using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -16,23 +16,23 @@ namespace Allowed.Telegram.Bot.Handlers;
 
 public class MessageHandler
 {
-    protected readonly BotData BotData;
     protected readonly ITelegramBotClient Client;
     protected readonly List<Type> ControllerTypes;
     protected readonly ILogger<MessageHandler> Logger;
+    protected readonly SimpleTelegramBotClientOptions Options;
 
     protected readonly IServiceProvider Provider;
 
     public MessageHandler(ControllersCollection collection, ITelegramBotClient client,
-        BotData botData, IServiceProvider provider)
+        SimpleTelegramBotClientOptions options, IServiceProvider provider)
     {
         Client = client;
-        BotData = botData;
+        Options = options;
         ControllerTypes = collection.ControllerTypes
             .Where(c =>
             {
                 var attributes = c.GetBotNameAttributes();
-                return attributes.Length == 0 || attributes.Any(a => a.GetName() == botData.Name);
+                return attributes.Length == 0 || attributes.Any(a => a.GetName() == options.Name);
             }).ToList();
 
         Provider = provider;
@@ -58,7 +58,8 @@ public class MessageHandler
 
     protected virtual Task<MethodInfo> GetMethodByText(MethodInfo[] methods, Message message)
     {
-        return Task.FromResult(methods.SingleOrDefault(m => m.GetTextCommandAttributes().Any()));
+        return Task.FromResult(methods.Where(m => m.GetTextCommandAttributes().Any())
+            .MaxBy(m => m.GetTextCommandAttributes().Count(a => a.GetText() == message.Text)));
     }
 
     protected virtual Task<MethodInfo> GetMethodByType(MethodInfo[] methods, Message message)
@@ -94,7 +95,7 @@ public class MessageHandler
         MethodInfo method = null;
         var allowedMethods = await GetAllowedMethods(callback.Message!.From!.Id);
 
-        var path = JsonConvert.DeserializeObject<CallbackQueryModel>(callback.Data).Path;
+        var path = JsonSerializer.Deserialize<CallbackQueryModel>(callback!.Data!)?.Path;
 
         if (type == MethodType.Callback)
             method = allowedMethods.SingleOrDefault(m => m.GetCallbackQueryAttributes().Any(a => a.GetPath() == path));
@@ -143,7 +144,7 @@ public class MessageHandler
                 {
                     Message = message,
                     Client = Client,
-                    BotData = BotData
+                    Options = Options
                 });
 
             var controller =
@@ -172,16 +173,16 @@ public class MessageHandler
                 {
                     Client = Client,
                     CallbackQuery = callback,
-                    BotData = BotData
+                    Options = Options
                 });
 
             var callbackType = typeof(CallbackQueryModel);
 
             if (methodParams.Any(p => p.ParameterType == callbackType))
-                parameters.Add(JsonConvert.DeserializeObject(callback.Data, callbackType));
+                parameters.Add(JsonSerializer.Deserialize(callback.Data, callbackType));
 
             if (methodParams.Any(p => p.ParameterType.IsSubclassOf(callbackType)))
-                parameters.Add(JsonConvert.DeserializeObject(
+                parameters.Add(JsonSerializer.Deserialize(
                     callback.Data, methodParams.Single(p => p.ParameterType.IsSubclassOf(callbackType)).ParameterType));
 
             var controller =
@@ -210,7 +211,7 @@ public class MessageHandler
                 {
                     InlineQuery = inline,
                     Client = Client,
-                    BotData = BotData
+                    Options = Options
                 });
 
             var controller =

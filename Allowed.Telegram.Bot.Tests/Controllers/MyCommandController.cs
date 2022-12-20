@@ -1,11 +1,13 @@
 ﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Controllers;
 
-namespace Allowed.Telegram.Bot.Tests.Controllers
+namespace Allowed.Telegram.Bot.Tests.Controllers;
+
+public class MyCommandController : CommandController
 {
-    public class MyCommandController : CommandController
+    [Command("start")]
+    public string Start()
     {
-        [Command("start")]
-        public string Start() => "MC1";
+        return "MC1";
     }
 }

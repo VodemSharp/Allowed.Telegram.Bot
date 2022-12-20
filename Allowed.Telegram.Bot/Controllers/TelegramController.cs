@@ -21,15 +21,15 @@ public class TelegramControllerBase : ControllerBase
         _clientsCollection = clientsCollection;
     }
 
-    private MessageHandler GetMessageHandler(ITelegramBotClient client, BotData botData)
+    private MessageHandler GetMessageHandler(ITelegramBotClient client, SimpleTelegramBotClientOptions options)
     {
-        return new MessageHandler(_controllersCollection, client, botData, _serviceProvider);
+        return new MessageHandler(_controllersCollection, client, options, _serviceProvider);
     }
 
     [HttpPost("{token}")]
     public async Task Post([FromBody] Update update, string token)
     {
-        var client = _clientsCollection.Clients.Single(c => c.BotData.Token == token);
-        await GetMessageHandler(client.Client, client.BotData).OnUpdate(client.Client, update, new CancellationToken());
+        var client = _clientsCollection.Clients.Single(c => c.Options.Token == token);
+        await GetMessageHandler(client.Client, client.Options).OnUpdate(client.Client, update, new CancellationToken());
     }
 }

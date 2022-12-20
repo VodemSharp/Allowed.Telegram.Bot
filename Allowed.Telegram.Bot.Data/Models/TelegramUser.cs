@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Allowed.Telegram.Bot.Data.Models;
+﻿namespace Allowed.Telegram.Bot.Data.Models;
 
 public class TelegramUser<TKey>
     where TKey : IEquatable<TKey>

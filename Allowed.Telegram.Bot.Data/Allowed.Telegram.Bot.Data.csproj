@@ -1,26 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <PackageId>Allowed.Telegram.Bot.Data</PackageId>
-    <Authors>VodemSharp</Authors>
-    <Company>Allowed Inc.</Company>
-    <Product>AllowedSharp</Product>
-    <Description>Models for Allowed.Telegram.Bot user account control system.</Description>
-    <PackageIcon>icon.png</PackageIcon>
-    <RepositoryType>git</RepositoryType>
-    <Version>1.5.0</Version>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>Allowed.Telegram.Bot.Data</PackageId>
+        <Authors>VodemSharp</Authors>
+        <Company>Allowed Inc.</Company>
+        <Product>AllowedSharp</Product>
+        <Description>Models for Allowed.Telegram.Bot user account control system.</Description>
+        <PackageIcon>icon.png</PackageIcon>
+        <RepositoryType>git</RepositoryType>
+        <Version>1.5.0</Version>
+        <RepositoryUrl>https://github.com/VodemSharp/Allowed.Telegram.Bot</RepositoryUrl>
+        <PackageVersion>2.0.0</PackageVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Telegram.Bot" Version="18.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Telegram.Bot" Version="18.0.0" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="Images\icon.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="Images\icon.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
 
 </Project>

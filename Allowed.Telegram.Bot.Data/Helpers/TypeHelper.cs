@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Allowed.Telegram.Bot.Data.Helpers;
+﻿namespace Allowed.Telegram.Bot.Data.Helpers;
 
 public static class TypeHelper
 {

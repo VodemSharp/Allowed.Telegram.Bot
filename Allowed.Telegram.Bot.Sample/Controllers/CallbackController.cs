@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Allowed.Telegram.Bot.Attributes;
+﻿using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.Models;
@@ -24,29 +23,29 @@ public class CallbackController : CommandController<int>
                     {
                         new InlineKeyboardButton("True")
                         {
-                            CallbackData = JsonSerializer.Serialize(
+                            CallbackData =
                                 new TestCallbackQueryModel
                                 {
                                     Path = "test",
                                     SomeData = true
-                                })
+                                }
                         },
                         new InlineKeyboardButton("False")
                         {
-                            CallbackData = JsonSerializer.Serialize(
+                            CallbackData =
                                 new TestCallbackQueryModel
                                 {
                                     Path = "test",
                                     SomeData = false
-                                })
+                                }
                         },
                         new InlineKeyboardButton("Default")
                         {
-                            CallbackData = JsonSerializer.Serialize(
+                            CallbackData =
                                 new CallbackQueryModel
                                 {
                                     Path = "default"
-                                })
+                                }
                         }
                     }
                 }

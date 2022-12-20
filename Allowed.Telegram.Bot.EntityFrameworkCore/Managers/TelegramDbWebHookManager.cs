@@ -2,22 +2,17 @@
 using System.Text.Json;
 using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Models;
-using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Builders;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
-using Allowed.Telegram.Bot.EntityFrameworkCore.Handlers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Managers;
-using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Managers;
@@ -62,11 +57,11 @@ public class TelegramDbWebHookManager<TKey, TUser, TRole, TBot> : TelegramWebHoo
         try
         {
             var clientsCollection = Services.GetRequiredService<ClientsCollection>();
-            await InitializeBots(clientsCollection.Clients.Select(c => c.BotData.Name));
+            await InitializeBots(clientsCollection.Clients.Select(c => c.Options.Name));
 
             foreach (var client in clientsCollection.Clients)
             {
-                var webhookAddress = @$"{client.BotData.Host}/{Route}/{client.BotData.Token}";
+                var webhookAddress = @$"{client.Options.Host}/{Route}/{client.Options.Token}";
 
                 if (TelegramWebHookOptions.DeleteOldHooks)
                     await client.Client.DeleteWebhookAsync(cancellationToken: stoppingToken);
@@ -89,16 +84,16 @@ public class TelegramDbWebHookManager<TKey, TUser, TRole, TBot> : TelegramWebHoo
                                 var request =
                                     await args.ApiRequestEventArgs.HttpRequestMessage?.Content?.ReadAsStringAsync(
                                         cancellationToken)!;
-                                
+
                                 var telegramId = JsonSerializer.Deserialize<JsonElement>(request)
                                     .GetProperty("chat_id").GetInt64();
 
                                 await using var scope = Services.CreateAsyncScope();
                                 var botsCollections = scope.ServiceProvider.GetRequiredService<BotsCollection<TKey>>();
-                                
+
                                 if (tgClient.BotId != null)
                                 {
-                                    var botId = botsCollections.Values[client.BotData.Name];
+                                    var botId = botsCollections.Values[client.Options.Name];
                                     var userService = _serviceFactory.CreateUserService<TKey, TUser>(botId);
                                     await userService.BlockBot(telegramId);
                                 }

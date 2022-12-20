@@ -25,6 +25,18 @@ public class TextController : CommandController<int>
         await data.Client.SendTextMessageAsync(data.Message.From!.Id, $"You say: {data.Message.Text}");
     }
 
+    [TextCommand("Test text command")]
+    public async Task TestTextMessage(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You have selected a test text command!");
+    }
+
+    [TextCommand("Test text command 2")]
+    public async Task TestTextMessage2(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You have selected a test text command 2!");
+    }
+
     [Command("set_text_test_state")]
     public async Task SetTest1State(MessageData messageData)
     {
@@ -36,6 +48,14 @@ public class TextController : CommandController<int>
     [State("TextTestState")]
     public async Task TestState(MessageData data)
     {
-        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You call text test state method");
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You call text test state method!");
+    }
+
+    [TextCommand("Test text command")]
+    [State("TextTestState")]
+    public async Task TestTextMessageState(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id,
+            "You call text test state method with selected text!");
     }
 }

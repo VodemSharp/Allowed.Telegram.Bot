@@ -47,10 +47,10 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
     private MessageDbHandler<TKey, TUser, TRole> GetMessageHandler(
         IUserService<TKey, TUser> userService,
         IRoleService<TKey, TRole> roleService,
-        ITelegramBotClient client, BotData botData)
+        ITelegramBotClient client, SimpleTelegramBotClientOptions options)
     {
         return new MessageDbHandler<TKey, TUser, TRole>(ControllersCollection,
-            client, botData, userService, roleService, Services);
+            client, options, userService, roleService, Services);
     }
 
     private async Task<Dictionary<string, TKey>> InitializeBots(IEnumerable<string> botNames)
@@ -79,20 +79,22 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
         {
             var clientsCollection = Services.GetRequiredService<ClientsCollection>();
             var bots =
-                await InitializeBots(clientsCollection.Clients.Select(c => c.BotData.Name));
+                await InitializeBots(clientsCollection.Clients.Select(c => c.Options.Name));
 
             foreach (var client in clientsCollection.Clients)
             {
-                var botId = bots.GetValueOrDefault(client.BotData.Name);
+                var botId = bots.GetValueOrDefault(client.Options.Name);
 
                 var userService = GetUserService(botId);
                 var roleService = GetRoleService(botId);
 
                 var messageHandler =
-                    GetMessageHandler(userService, roleService, client.Client, client.BotData);
+                    GetMessageHandler(userService, roleService, client.Client, client.Options);
 
-                async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token) =>
+                async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token)
+                {
                     await messageHandler.OnUpdate(tgClient, update, botId, token);
+                }
 
                 var receiverOptions = new ReceiverOptions();
 

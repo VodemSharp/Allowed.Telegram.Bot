@@ -1,5 +1,4 @@
-﻿using System;
-using Allowed.Telegram.Bot.Data.Models;
+﻿using Allowed.Telegram.Bot.Data.Models;
 using Allowed.Telegram.Bot.Data.Services;
 
 namespace Allowed.Telegram.Bot.Data.Factories;

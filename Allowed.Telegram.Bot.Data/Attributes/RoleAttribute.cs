@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Allowed.Telegram.Bot.Data.Attributes;
+﻿namespace Allowed.Telegram.Bot.Data.Attributes;
 
 [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
 public class RoleAttribute : Attribute
