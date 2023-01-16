@@ -1,19 +1,22 @@
-﻿using Allowed.Telegram.Bot.Extensions.Collections;
+﻿using Allowed.Telegram.Bot.Abstractions;
+using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Handlers;
 using Allowed.Telegram.Bot.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.Controllers;
 
-public class TelegramControllerBase : ControllerBase
+public abstract class TelegramControllerBase : ControllerBase
 {
-    private readonly ClientsCollection _clientsCollection;
-    private readonly ControllersCollection _controllersCollection;
     private readonly IServiceProvider _serviceProvider;
-
-    public TelegramControllerBase(IServiceProvider serviceProvider, ControllersCollection controllersCollection,
+    private readonly ControllersCollection _controllersCollection;
+    private readonly ClientsCollection _clientsCollection;
+    
+    public TelegramControllerBase(IServiceProvider serviceProvider,
+        ControllersCollection controllersCollection,
         ClientsCollection clientsCollection)
     {
         _serviceProvider = serviceProvider;
@@ -27,7 +30,7 @@ public class TelegramControllerBase : ControllerBase
     }
 
     [HttpPost("{token}")]
-    public async Task Post([FromBody] Update update, string token)
+    public virtual async Task Post([FromBody] Update update, string token)
     {
         var client = _clientsCollection.Clients.Single(c => c.Options.Token == token);
         await GetMessageHandler(client.Client, client.Options).OnUpdate(client.Client, update, new CancellationToken());

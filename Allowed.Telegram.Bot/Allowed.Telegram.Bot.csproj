@@ -13,7 +13,7 @@
         <PackageIcon>icon.png</PackageIcon>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/VodemSharp/Allowed.Telegram.Bot</RepositoryUrl>
-        <PackageVersion>4.0.0</PackageVersion>
+        <PackageVersion>4.1.0</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

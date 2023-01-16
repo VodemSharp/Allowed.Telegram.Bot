@@ -24,7 +24,7 @@ public class MessageHandler
     protected readonly IServiceProvider Provider;
 
     public MessageHandler(ControllersCollection collection, ITelegramBotClient client,
-        SimpleTelegramBotClientOptions options, IServiceProvider provider)
+        SimpleTelegramBotClientOptions options, IServiceProvider services)
     {
         Client = client;
         Options = options;
@@ -35,9 +35,9 @@ public class MessageHandler
                 return attributes.Length == 0 || attributes.Any(a => a.GetName() == options.Name);
             }).ToList();
 
-        Provider = provider;
+        Provider = services;
 
-        var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+        var loggerFactory = Provider.GetRequiredService<ILoggerFactory>();
         Logger = loggerFactory.CreateLogger<MessageHandler>();
     }
 

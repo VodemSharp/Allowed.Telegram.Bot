@@ -1,26 +1,28 @@
-﻿using Allowed.Telegram.Bot.Data.Factories;
+﻿using Allowed.Telegram.Bot.Abstractions;
+using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Models;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Handlers;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Controllers;
 
-public class TelegramDbControllerBase<TKey, TUser, TRole> : ControllerBase
+public abstract class TelegramDbControllerBase<TKey, TUser, TRole> : ControllerBase
     where TKey : IEquatable<TKey>
     where TUser : TelegramUser<TKey>
     where TRole : TelegramRole<TKey>
 {
     private readonly BotsCollection<TKey> _botsCollection;
-    private readonly ClientsCollection _clientsCollection;
     private readonly ControllersCollection _controllersCollection;
+    private readonly ClientsCollection _clientsCollection;
     private readonly IServiceFactory _serviceFactory;
     private readonly IServiceProvider _serviceProvider;
 
     public TelegramDbControllerBase(IServiceProvider serviceProvider, IServiceFactory serviceFactory,
-        ControllersCollection controllersCollection, ClientsCollection clientsCollection,
+        ClientsCollection clientsCollection, ControllersCollection controllersCollection,
         BotsCollection<TKey> botsCollection)
     {
         _serviceProvider = serviceProvider;

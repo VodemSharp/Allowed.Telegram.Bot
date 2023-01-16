@@ -7,4 +7,5 @@ public class ClientItem
 {
     public ITelegramBotClient Client { get; set; }
     public SimpleTelegramBotClientOptions Options { get; set; }
+    public CancellationTokenSource CancellationTokenSource { get; set; }
 }

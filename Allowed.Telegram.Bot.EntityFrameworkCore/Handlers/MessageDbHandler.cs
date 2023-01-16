@@ -28,8 +28,8 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
 
     public MessageDbHandler(ControllersCollection collection, ITelegramBotClient client,
         SimpleTelegramBotClientOptions options,
-        IUserService<TKey, TUser> userService, IRoleService<TKey, TRole> roleService, IServiceProvider provider)
-        : base(collection, client, options, provider)
+        IUserService<TKey, TUser> userService, IRoleService<TKey, TRole> roleService, IServiceProvider services)
+        : base(collection, client, options, services)
     {
         _userService = userService;
         _roleService = roleService;

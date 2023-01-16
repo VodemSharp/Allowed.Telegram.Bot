@@ -1,4 +1,5 @@
-﻿using Allowed.Telegram.Bot.Data.Controllers;
+﻿using Allowed.Telegram.Bot.Abstractions;
+using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Data.Helpers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Managers;
@@ -11,11 +12,11 @@ namespace Allowed.Telegram.Bot.EntityFrameworkCore.Extensions;
 
 public static class ClientsExtensions
 {
-    private static void AddCollections(this IServiceCollection services)
+    public static IServiceCollection AddTelegramDbControllers(this IServiceCollection services)
     {
         services.AddSingleton(typeof(BotsCollection<>));
 
-        services.AddSingleton(_ =>
+        return services.AddSingleton(_ =>
             new ControllersCollection
             {
                 ControllerTypes = AppDomain.CurrentDomain.GetAssemblies()
@@ -27,9 +28,9 @@ public static class ClientsExtensions
 
     public static IServiceCollection AddTelegramDbManager(this IServiceCollection services)
     {
-        AddCollections(services);
-
-        services.AddHostedService(provider =>
+        services.AddSingleton<ClientsCollection>();
+        
+        services.AddSingleton<ITelegramManager>(provider =>
         {
             var options = provider.GetRequiredService<ContextOptions>();
 
@@ -43,9 +44,9 @@ public static class ClientsExtensions
 
     public static IServiceCollection AddTelegramDbWebHookManager(this IServiceCollection services)
     {
-        AddCollections(services);
-
-        services.AddHostedService(provider =>
+        services.AddSingleton<ClientsCollection>();
+        
+        services.AddSingleton<ITelegramManager>(provider =>
         {
             var options = provider.GetRequiredService<ContextOptions>();
 
