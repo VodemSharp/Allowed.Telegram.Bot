@@ -89,7 +89,7 @@ public class TelegramDbWebHookManager<TKey, TUser, TRole, TBot> : TelegramWebHoo
                         var options = scope.ServiceProvider.GetRequiredService<ContextOptions>();
                         var db = (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType);
                         
-                        var botId = await db.Set<TelegramBot<TKey>>().Where(b => b.Name == client.Options.Name)
+                        var botId = await db.Set<TBot>().Where(b => b.Name == client.Options.Name)
                             .Select(b => b.Id).SingleAsync(cancellationToken: cancellationToken);
                         
                         if (tgClient.BotId != null)

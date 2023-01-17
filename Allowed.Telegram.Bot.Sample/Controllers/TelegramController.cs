@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Allowed.Telegram.Bot.Sample.Controllers;
 
 [Route("telegram")]
-public class TelegramController : TelegramDbControllerBase<int, ApplicationTgUser, ApplicationTgRole>
+public class TelegramController : TelegramDbControllerBase<int, ApplicationTgUser, ApplicationTgRole, ApplicationTgBot>
 {
     private readonly ITelegramManager _telegramManager;
     

@@ -10,10 +10,11 @@ using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Controllers;
 
-public abstract class TelegramDbControllerBase<TKey, TUser, TRole> : ControllerBase
+public abstract class TelegramDbControllerBase<TKey, TUser, TRole, TBot> : ControllerBase
     where TKey : IEquatable<TKey>
     where TUser : TelegramUser<TKey>
     where TRole : TelegramRole<TKey>
+    where TBot: TelegramBot<TKey>
 {
     private readonly ClientsCollection _clientsCollection;
     private readonly ControllersCollection _controllersCollection;
@@ -37,7 +38,7 @@ public abstract class TelegramDbControllerBase<TKey, TUser, TRole> : ControllerB
         var client = _clientsCollection.Clients.Single(c => c.Options.Token == token);
         var db = (DbContext)_serviceProvider.GetRequiredService(_contextOptions.ContextType);
 
-        var botId = await db.Set<TelegramBot<TKey>>().Where(b => b.Name == client.Options.Name)
+        var botId = await db.Set<TBot>().Where(b => b.Name == client.Options.Name)
             .Select(b => b.Id).SingleAsync();
 
         var userService = _serviceFactory.CreateUserService<TKey, TUser>(botId);
