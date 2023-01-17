@@ -3,7 +3,6 @@ using System.Text.Json;
 using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Models;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Builders;
-using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Extensions.Collections.Items;
@@ -87,11 +86,14 @@ public class TelegramDbWebHookManager<TKey, TUser, TRole, TBot> : TelegramWebHoo
                             .GetProperty("chat_id").GetInt64();
 
                         await using var scope = _services.CreateAsyncScope();
-                        var botsCollections = scope.ServiceProvider.GetRequiredService<BotsCollection<TKey>>();
-
+                        var options = scope.ServiceProvider.GetRequiredService<ContextOptions>();
+                        var db = (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType);
+                        
+                        var botId = await db.Set<TelegramBot<TKey>>().Where(b => b.Name == client.Options.Name)
+                            .Select(b => b.Id).SingleAsync(cancellationToken: cancellationToken);
+                        
                         if (tgClient.BotId != null)
                         {
-                            var botId = botsCollections.Values[client.Options.Name];
                             var serviceFactory =
                                 (IServiceFactory)scope.ServiceProvider.GetRequiredService(typeof(IServiceFactory));
                             var userService = serviceFactory.CreateUserService<TKey, TUser>(botId);

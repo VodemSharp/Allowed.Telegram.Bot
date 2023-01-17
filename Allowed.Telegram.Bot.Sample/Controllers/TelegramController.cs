@@ -1,7 +1,7 @@
 ﻿using Allowed.Telegram.Bot.Abstractions;
 using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Controllers;
-using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
+using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Factories;
 using Allowed.Telegram.Bot.Options;
@@ -24,9 +24,8 @@ public class TelegramController : TelegramDbControllerBase<int, ApplicationTgUse
     public TelegramController(IServiceProvider serviceProvider, IServiceFactory serviceFactory,
         ITelegramManager telegramManager,
         ApplicationDbContext db, ClientsCollection clientsCollection,
-        ControllersCollection controllersCollection,
-        BotsCollection<int> botsCollection) : base(serviceProvider, serviceFactory,
-        clientsCollection, controllersCollection, botsCollection)
+        ControllersCollection controllersCollection, ContextOptions contextOptions) : base(serviceProvider, serviceFactory,
+        clientsCollection, controllersCollection, contextOptions)
     {
         _telegramManager = telegramManager;
         

@@ -1,7 +1,6 @@
 ﻿using Allowed.Telegram.Bot.Abstractions;
 using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Data.Helpers;
-using Allowed.Telegram.Bot.EntityFrameworkCore.Extensions.Items;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Managers;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Options;
 using Allowed.Telegram.Bot.Extensions.Collections;
@@ -14,8 +13,6 @@ public static class ClientsExtensions
 {
     public static IServiceCollection AddTelegramDbControllers(this IServiceCollection services)
     {
-        services.AddSingleton(typeof(BotsCollection<>));
-
         return services.AddSingleton(_ =>
             new ControllersCollection
             {
