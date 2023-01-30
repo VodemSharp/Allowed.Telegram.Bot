@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using Allowed.Telegram.Bot.Controllers;
+using Allowed.Telegram.Bot.Enums;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Helpers;
 using Allowed.Telegram.Bot.Middlewares;
@@ -46,26 +47,81 @@ public class MessageHandler
         return Task.FromResult(ControllerTypes.SelectMany(c => c.GetMethods()).ToArray());
     }
 
-    protected virtual Task<MethodInfo> GetMethodByPath(MethodInfo[] methods, Message message)
+    protected virtual Task<(MethodInfo, string)> GetMethodByPath(MethodInfo[] methods, Message message)
     {
-        var method = methods.SingleOrDefault(m => m.GetCommandAttributes().Any(a => $"/{a.GetPath()}" == message.Text));
+        var foundMethods = methods.Where(m =>
+            m.GetCommandAttributes().Any(a =>
+            {
+                return a.Type switch
+                {
+                    ComparisonTypes.Strict => message.Text == $"/{a.GetPath()}",
+                    ComparisonTypes.Parameterized => message.Text!.Split(" ").First() == $"/{a.GetPath()}",
+                    _ => false
+                };
+            })).ToList();
+
+        var method = foundMethods.Count > 1
+            ? foundMethods.SingleOrDefault(f => f.GetCommandAttributes().Any(a => a.Type == ComparisonTypes.Strict))
+            : foundMethods.SingleOrDefault();
 
         if (method == null)
             method = methods.SingleOrDefault(m => m.GetDefaultCommandAttributes().Any());
 
-        return Task.FromResult(method);
+        return Task.FromResult((method, string.Join(" ", message.Text!.Split(" ").Skip(1))));
     }
 
-    protected virtual Task<MethodInfo> GetMethodByText(MethodInfo[] methods, Message message)
+    protected virtual Task<List<MethodInfo>> GetTextCommandMethods(MethodInfo[] methods, Message message)
     {
-        return Task.FromResult(methods.Where(m => m.GetTextCommandAttributes().Any())
-            .MaxBy(m => m.GetTextCommandAttributes().Count(a => a.GetText() == message.Text)));
+        return Task.FromResult(methods.Where(m =>
+            m.GetTextCommandAttributes().Any(a =>
+            {
+                return a.Type switch
+                {
+                    ComparisonTypes.Strict => message.Text == a.GetText(),
+                    ComparisonTypes.Parameterized => message.Text!.StartsWith(a.GetText()),
+                    _ => false
+                };
+            })).ToList());
     }
 
-    protected virtual Task<MethodInfo> GetMethodByType(MethodInfo[] methods, Message message)
+    protected virtual async Task<(MethodInfo, string)> GetMethodByText(MethodInfo[] methods, Message message)
     {
-        return Task.FromResult(methods.SingleOrDefault(m =>
-            m.GetTypedCommandAttributes().Any(a => a.GetMessageType() == message.Type)));
+        var foundMethods = await GetTextCommandMethods(methods, message);
+
+        var method = foundMethods.Count > 1
+            ? foundMethods.SingleOrDefault(f => f.GetTextCommandAttributes().Any(a => a.Type == ComparisonTypes.Strict))
+            : foundMethods.SingleOrDefault();
+
+        if (method == null)
+            method = methods.FirstOrDefault(m => m.GetTextCommandAttributes().Any(a => a.GetText() == null));
+
+        string messageParams = null;
+
+        if (method != null)
+        {
+            var attributes = method.GetTextCommandAttributes().ToList();
+
+            if (attributes.All(a => a.Type != ComparisonTypes.Strict) &&
+                attributes.Any(a => a.Type == ComparisonTypes.Parameterized))
+            {
+                messageParams = message.Text;
+                attributes.ForEach(a =>
+                {
+                    if (messageParams!.StartsWith(a.GetText()))
+                        messageParams = messageParams![a.GetText().Length..];
+                });
+            }
+        }
+
+        messageParams = messageParams == string.Empty ? null : messageParams?[1..];
+        
+        return (method, messageParams);
+    }
+
+    protected virtual Task<(MethodInfo, string)> GetMethodByType(MethodInfo[] methods, Message message)
+    {
+        return Task.FromResult((methods.SingleOrDefault(m =>
+            m.GetTypedCommandAttributes().Any(a => a.GetMessageType() == message.Type)), (string)null));
     }
 
     protected async Task<TelegramMethod> GetMethod(MethodType type, Message message)
@@ -77,14 +133,15 @@ public class MessageHandler
             MethodType.ByPath => await GetMethodByPath(allowedMethods, message),
             MethodType.Text => await GetMethodByText(allowedMethods, message),
             MethodType.ByType => await GetMethodByType(allowedMethods, message),
-            _ => null
+            _ => (null, null)
         };
 
-        if (method != null)
+        if (method.Item1 != null)
             return new TelegramMethod
             {
-                ControllerType = ControllerTypes.Single(c => c == method.DeclaringType),
-                Method = method
+                ControllerType = ControllerTypes.Single(c => c == method.Item1.DeclaringType),
+                Method = method.Item1,
+                Params = method.Item2
             };
 
         return null;
@@ -140,12 +197,15 @@ public class MessageHandler
             var parameters = new List<object>();
 
             if (methodParams.Any(p => p.ParameterType == typeof(MessageData)))
+            {
                 parameters.Add(new MessageData
                 {
                     Message = message,
                     Client = Client,
-                    Options = Options
+                    Options = Options,
+                    Params = method.Params
                 });
+            }
 
             var controller =
                 (CommandController)ActivatorUtilities.CreateInstance(Provider, method.ControllerType);

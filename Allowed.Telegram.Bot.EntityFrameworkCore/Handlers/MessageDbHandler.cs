@@ -6,6 +6,7 @@ using Allowed.Telegram.Bot.Data.Helpers;
 using Allowed.Telegram.Bot.Data.Models;
 using Allowed.Telegram.Bot.Data.Services;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Middlewares;
+using Allowed.Telegram.Bot.Enums;
 using Allowed.Telegram.Bot.Extensions.Collections;
 using Allowed.Telegram.Bot.Handlers;
 using Allowed.Telegram.Bot.Helpers;
@@ -25,6 +26,8 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
 {
     private readonly IRoleService<TKey, TRole> _roleService;
     private readonly IUserService<TKey, TUser> _userService;
+
+    private bool _textAllFilter;
 
     public MessageDbHandler(ControllersCollection collection, ITelegramBotClient client,
         SimpleTelegramBotClientOptions options,
@@ -63,25 +66,44 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
             })).ToArray();
     }
 
-    protected override async Task<MethodInfo> GetMethodByText(MethodInfo[] methods, Message message)
+    protected override async Task<List<MethodInfo>> GetTextCommandMethods(MethodInfo[] methods, Message message)
     {
-        var textMethods = methods.Where(m => m.GetTextCommandAttributes().Any()).ToList();
-        MethodInfo method = null;
+        return (await base.GetTextCommandMethods(methods, message))
+            .Where(m => _textAllFilter || m.GetStateAttributes().Length == 0).ToList();
+    }
 
-        if (textMethods.Count != 0)
+    protected override async Task<(MethodInfo, string)> GetMethodByText(MethodInfo[] methods, Message message)
+    {
+        var result = await base.GetMethodByText(methods, message);
+
+        if (result.Item1.GetTextCommandAttributes().Any(a => a.GetText() == null))
         {
-            var userState = await GetStateValue(message.From!.Id);
+            var textMethods = methods.Where(m => m.GetTextCommandAttributes().Any()).ToList();
 
-            if (!string.IsNullOrEmpty(userState))
-                method = textMethods.Where(m => m.GetStateAttributes().Any(s => s.GetState() == userState))
-                    .MaxBy(m => m.GetTextCommandAttributes().Count(a => a.GetText() == message.Text));
+            if (textMethods.Count != 0)
+            {
+                MethodInfo[] foundMethods = null;
 
-            if (method == null)
-                method = textMethods.Where(m => !m.GetStateAttributes().Any())
-                    .MaxBy(m => m.GetTextCommandAttributes().Count(a => a.GetText() == message.Text));
+                var userState = await GetStateValue(message.From!.Id);
+
+                if (!string.IsNullOrEmpty(userState))
+                {
+                    foundMethods = textMethods.Where(m => m.GetStateAttributes().Any(s => s.GetState() == userState))
+                        .ToArray();
+                }
+
+                if (foundMethods != null)
+                {
+                    _textAllFilter = true;
+                    var method = await base.GetMethodByText(foundMethods, message);
+
+                    if (method.Item1 != null)
+                        return method;
+                }
+            }
         }
 
-        return method;
+        return result;
     }
 
     private async Task<object> InvokeMethod(MethodType type, Message message, TKey botId)
@@ -94,12 +116,15 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
             var parameters = new List<object>();
 
             if (methodParams.Any(p => p.ParameterType == typeof(MessageData)))
+            {
                 parameters.Add(new MessageData
                 {
                     Message = message,
                     Client = Client,
-                    Options = Options
+                    Options = Options,
+                    Params = method.Params
                 });
+            }
 
             var controller = (CommandController<TKey>)ActivatorUtilities
                 .CreateInstance(Provider, method.ControllerType);

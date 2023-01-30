@@ -61,6 +61,7 @@ public class TelegramWebHookManager : ITelegramManager
         }
 
         client.Client.DeleteWebhookAsync();
+        ClientsCollection.Clients.Remove(client);
         return Task.CompletedTask;
     }
 

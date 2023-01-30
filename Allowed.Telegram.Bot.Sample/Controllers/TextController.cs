@@ -3,6 +3,7 @@ using Allowed.Telegram.Bot.Data.Attributes;
 using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Services;
+using Allowed.Telegram.Bot.Enums;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.DbModels.Allowed;
 using Telegram.Bot;
@@ -51,11 +52,19 @@ public class TextController : CommandController<int>
         await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You call text test state method!");
     }
 
-    [TextCommand("Test text command")]
+    [TextCommand("Test state command")]
     [State("TextTestState")]
     public async Task TestTextMessageState(MessageData data)
     {
         await data.Client.SendTextMessageAsync(data.Message.From!.Id,
             "You call text test state method with selected text!");
+    }
+    
+    [TextCommand("Test parameterized command", Type = ComparisonTypes.Parameterized)]
+    [State("TextTestState")]
+    public async Task TestTextMessageStateParameterized(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id,
+            "You call text test state parameterized method with selected text!");
     }
 }

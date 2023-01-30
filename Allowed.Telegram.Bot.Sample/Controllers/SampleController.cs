@@ -1,7 +1,9 @@
-﻿using Allowed.Telegram.Bot.Attributes;
+﻿using System.Text;
+using Allowed.Telegram.Bot.Attributes;
 using Allowed.Telegram.Bot.Data.Controllers;
 using Allowed.Telegram.Bot.Data.Factories;
 using Allowed.Telegram.Bot.Data.Services;
+using Allowed.Telegram.Bot.Enums;
 using Allowed.Telegram.Bot.Models;
 using Allowed.Telegram.Bot.Sample.DbModels.Allowed;
 using Telegram.Bot;
@@ -21,9 +23,21 @@ public class SampleController : CommandController<int>
     [Command("start")]
     public async Task Start(MessageData data)
     {
-        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You pressed: /start");
+        var result = "You pressed: /start";
+        
+        if (!string.IsNullOrEmpty(data.Params))
+            result = $"{result}\nParams: {data.Params}";
+
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, result);
     }
 
+    // You can use only top example for strict also
+    [Command("start", Type = ComparisonTypes.Strict)]
+    public async Task StrictStart(MessageData data)
+    {
+        await data.Client.SendTextMessageAsync(data.Message.From!.Id, "You pressed: /start");
+    }
+    
     [Command("add_admin_role")]
     public async Task AddAdminRole(MessageData data)
     {
