@@ -76,7 +76,7 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
     {
         var result = await base.GetMethodByText(methods, message);
 
-        if (result.Item1.GetTextCommandAttributes().Any(a => a.GetText() == null))
+        if (result.Item1 != null && result.Item1.GetTextCommandAttributes().Any(a => a.GetText() == null))
         {
             var textMethods = methods.Where(m => m.GetTextCommandAttributes().Any()).ToList();
 
