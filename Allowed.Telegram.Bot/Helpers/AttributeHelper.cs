@@ -45,4 +45,9 @@ public static class AttributeHelper
     {
         return (InlineQueryAttribute[])method.GetCustomAttributes<InlineQueryAttribute>(false);
     }
+    
+    public static IEnumerable<PreCheckoutQueryAttribute> GetPreCheckoutQueryAttributes(this MethodInfo method)
+    {
+        return (PreCheckoutQueryAttribute[])method.GetCustomAttributes<PreCheckoutQueryAttribute>(false);
+    }
 }

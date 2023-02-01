@@ -16,6 +16,11 @@ public abstract class MessageMiddleware
     {
         return Task.CompletedTask;
     }
+    
+    public virtual Task AfterPreCheckoutProcessedAsync(long telegramId)
+    {
+        return Task.CompletedTask;
+    }
 
     public virtual void AfterMessageProcessed(long telegramId)
     {
@@ -26,6 +31,10 @@ public abstract class MessageMiddleware
     }
 
     public virtual void AfterInlineProcessed(long telegramId)
+    {
+    }
+    
+    public virtual void AfterPreCheckoutProcessed(long telegramId)
     {
     }
 }

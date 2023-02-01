@@ -18,6 +18,11 @@ public abstract class MessageDbMiddleware<TKey>
         return Task.CompletedTask;
     }
 
+    public virtual Task AfterPreCheckoutProcessedAsync(TKey botId, long telegramId)
+    {
+        return Task.CompletedTask;
+    }
+    
     public virtual void AfterMessageProcessed(TKey botId, long telegramId)
     {
     }
@@ -27,6 +32,10 @@ public abstract class MessageDbMiddleware<TKey>
     }
 
     public virtual void AfterInlineProcessed(TKey botId, long telegramId)
+    {
+    }
+    
+    public virtual void AfterPreCheckoutProcessed(TKey botId, long telegramId)
     {
     }
 }

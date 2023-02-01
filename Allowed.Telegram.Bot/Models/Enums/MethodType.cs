@@ -7,5 +7,6 @@ public enum MethodType
     Text,
     Inline,
     Callback,
+    PreCheckout,
     Update
 }

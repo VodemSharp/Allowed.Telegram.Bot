@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Payments;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Handlers;
 
@@ -216,6 +217,39 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
 
         return null;
     }
+    
+    private async Task<object> InvokePreCheckoutQuery(MethodType type, PreCheckoutQuery preCheckout, TKey botId)
+    {
+        var method = await GetMethod(type, preCheckout);
+
+        if (method != null && method.ControllerType != null && method.Method != null)
+        {
+            var methodParams = method.Method.GetParameters();
+            List<object> parameters = new();
+
+            if (methodParams.Any(p => p.ParameterType == typeof(PreCheckoutQueryData)))
+                parameters.Add(new PreCheckoutQueryData
+                {
+                    PreCheckoutQuery = preCheckout,
+                    Client = Client,
+                    Options = Options
+                });
+
+            var controller = (CommandController<TKey>)ActivatorUtilities
+                .CreateInstance(Provider, method.ControllerType);
+
+            controller.BotId = botId;
+
+            var serviceFactory = Provider.GetService<IServiceFactory>();
+
+            controller.Initialize(serviceFactory, preCheckout.From.Id);
+            await controller.InitializeAsync(serviceFactory, preCheckout.From.Id);
+
+            return await MethodHelper.InvokeMethod(method.Method, parameters, controller);
+        }
+
+        return null;
+    }
 
     public async Task<object> OnUpdate(ITelegramBotClient client, Update update, TKey botId, CancellationToken token)
     {
@@ -259,6 +293,18 @@ public class MessageDbHandler<TKey, TUser, TRole> : MessageHandler
                 {
                     messageMiddleware.AfterInlineProcessed(botId, update.InlineQuery.From.Id);
                     await messageMiddleware.AfterInlineProcessedAsync(botId, update.InlineQuery.From.Id);
+                }
+            }
+            else if (update.PreCheckoutQuery != null)
+            {
+                await _userService.CheckUser(update.PreCheckoutQuery.From);
+
+                result = await InvokePreCheckoutQuery(MethodType.PreCheckout, update.PreCheckoutQuery, botId);
+
+                if (messageMiddleware != null)
+                {
+                    messageMiddleware.AfterPreCheckoutProcessed(botId, update.PreCheckoutQuery.From.Id);
+                    await messageMiddleware.AfterPreCheckoutProcessedAsync(botId, update.PreCheckoutQuery.From.Id);
                 }
             }
         }

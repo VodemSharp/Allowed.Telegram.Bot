@@ -65,7 +65,6 @@ public class TelegramDbManager<TKey, TUser, TRole, TBot> : TelegramManager
 
             var serviceFactory = (IServiceFactory)scope.ServiceProvider.GetRequiredService(typeof(IServiceFactory));
             var userService = serviceFactory.CreateUserService<TKey, TUser>(botId);
-            ;
             var roleService = serviceFactory.CreateRoleService<TKey, TRole>(botId);
 
             await new MessageDbHandler<TKey, TUser, TRole>(ControllersCollection,

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.Payments;
 
 namespace Allowed.Telegram.Bot.Handlers;
 
@@ -114,7 +115,7 @@ public class MessageHandler
         }
 
         messageParams = messageParams == string.Empty ? null : messageParams?[1..];
-        
+
         return (method, messageParams);
     }
 
@@ -176,6 +177,24 @@ public class MessageHandler
         var allowedMethods = await GetAllowedMethods(inline.From.Id);
 
         if (type == MethodType.Inline) method = allowedMethods.SingleOrDefault(m => m.GetInlineQueryAttributes().Any());
+
+        if (method != null)
+            return new TelegramMethod
+            {
+                ControllerType = ControllerTypes.Single(c => c == method.DeclaringType),
+                Method = method
+            };
+
+        return null;
+    }
+
+    protected async Task<TelegramMethod> GetMethod(MethodType type, PreCheckoutQuery preCheckoutQuery)
+    {
+        MethodInfo method = null;
+        var allowedMethods = await GetAllowedMethods(preCheckoutQuery.From.Id);
+
+        if (type == MethodType.PreCheckout)
+            method = allowedMethods.SingleOrDefault(m => m.GetPreCheckoutQueryAttributes().Any());
 
         if (method != null)
             return new TelegramMethod
@@ -286,6 +305,35 @@ public class MessageHandler
         return null;
     }
 
+    private async Task<object> InvokePreCheckout(MethodType type, PreCheckoutQuery preCheckout)
+    {
+        var method = await GetMethod(type, preCheckout);
+
+        if (method is { ControllerType: { } } && method.Method != null)
+        {
+            var methodParams = method.Method.GetParameters();
+            var parameters = new List<object>();
+
+            if (methodParams.Any(p => p.ParameterType == typeof(PreCheckoutQueryData)))
+                parameters.Add(new PreCheckoutQueryData
+                {
+                    PreCheckoutQuery = preCheckout,
+                    Client = Client,
+                    Options = Options
+                });
+
+            var controller =
+                (CommandController)ActivatorUtilities.CreateInstance(Provider, method.ControllerType);
+
+            controller.Initialize(preCheckout.From.Id);
+            await controller.InitializeAsync(preCheckout.From.Id);
+
+            return await MethodHelper.InvokeMethod(method.Method, parameters, controller);
+        }
+
+        return null;
+    }
+
     protected virtual MethodType GetMethodType(Message message)
     {
         return message.Type switch
@@ -331,6 +379,16 @@ public class MessageHandler
                 {
                     messageMiddleware.AfterInlineProcessed(update.InlineQuery.From.Id);
                     await messageMiddleware.AfterInlineProcessedAsync(update.InlineQuery.From.Id);
+                }
+            }
+            else if (update.PreCheckoutQuery != null)
+            {
+                result = await InvokePreCheckout(MethodType.PreCheckout, update.PreCheckoutQuery);
+
+                if (messageMiddleware != null)
+                {
+                    messageMiddleware.AfterPreCheckoutProcessed(update.PreCheckoutQuery.From.Id);
+                    await messageMiddleware.AfterPreCheckoutProcessedAsync(update.PreCheckoutQuery.From.Id);
                 }
             }
         }
