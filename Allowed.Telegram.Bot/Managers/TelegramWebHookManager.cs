@@ -41,9 +41,8 @@ public class TelegramWebHookManager : ITelegramManager
 
         if (TelegramWebHookOptions.DeleteOldHooks)
             await client.Client.DeleteWebhookAsync();
-        await client.Client.SetWebhookAsync(
-            webhookAddress,
-            allowedUpdates: Array.Empty<UpdateType>());
+
+        await client.Client.SetWebhookAsync(webhookAddress, allowedUpdates: Array.Empty<UpdateType>());
     }
 
     public virtual async Task Stop(IEnumerable<string> names)
@@ -51,18 +50,17 @@ public class TelegramWebHookManager : ITelegramManager
         foreach (var name in names) await Stop(name);
     }
 
-    public Task Stop(string name)
+    public async Task Stop(string name)
     {
         var client = ClientsCollection.Clients.SingleOrDefault(c => c.Options.Name == name);
         if (client == null)
         {
             Logger.LogWarning("Telegram bot has already been stopped!");
-            return Task.CompletedTask;
+            return;
         }
 
-        client.Client.DeleteWebhookAsync();
+        await client.Client.DeleteWebhookAsync();
         ClientsCollection.Clients.Remove(client);
-        return Task.CompletedTask;
     }
 
     public virtual async Task Start(IEnumerable<ClientItem> clients)
