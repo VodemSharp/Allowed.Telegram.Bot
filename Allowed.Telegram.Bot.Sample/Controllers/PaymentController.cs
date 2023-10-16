@@ -12,7 +12,7 @@ public class PaymentController : CommandController<int>
     public async Task CreatePayment(MessageData data)
     {
         await data.Client.SendInvoiceAsync(data.Message.From.Id, "Payment", "PaymentDescription",
-            Guid.NewGuid().ToString(), "<PaymentToken>", "USD", new List<LabeledPrice>
+            Guid.NewGuid().ToString(), "284685063:TEST:MjFhOTc5NjgzNzFl", "USD", new List<LabeledPrice>
             {
                 new("USD", 100)
             });
