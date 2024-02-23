@@ -31,7 +31,7 @@ var telegramManager = app.Services.GetRequiredService<ITelegramManager>();
 telegramManager.Start(new[]
 {
     // TelegramBotClientFactory.CreateClient(new SimpleTelegramBotClientOptions("<NAME>", "<TOKEN>")),
-    TelegramBotClientFactory.CreateClient(new SafeTelegramBotClientOptions("Sample", "5957752660:AAEtbfKEVFGF40fBjZ17eEKrIEu4Wm1WtSg"))
+    TelegramBotClientFactory.CreateClient(new SafeTelegramBotClientOptions("<NAME>", "<TOKEN>"))
 });
 
 // Configure the HTTP request pipeline.

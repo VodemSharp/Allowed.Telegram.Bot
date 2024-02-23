@@ -1,5 +1,7 @@
-﻿using Allowed.Telegram.Bot.Data.Models;
+﻿using System.Linq.Expressions;
+using Allowed.Telegram.Bot.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Allowed.Telegram.Bot.EntityFrameworkCore.Extensions;
 
@@ -26,34 +28,42 @@ public static class DbContextExtensions
         builder.Ignore<TelegramBotUserRole<TKey>>();
 
         // TelegramUser
-        builder.Entity<TUser>().HasKey(u => u.Id);
+        var tUserEntity = builder.Entity<TUser>();
+        tUserEntity.HasKey(u => u.Id);
 
-        builder.Entity<TUser>().HasIndex(u => u.TelegramId).IsUnique();
-        builder.Entity<TUser>().HasIndex(u => u.Username);
+        tUserEntity.HasIndex(u => u.TelegramId).IsUnique();
+        tUserEntity.HasIndex(u => u.Username);
 
         // TelegramRole
         builder.Entity<TRole>().HasKey(r => r.Id);
 
         // TelegramBot
-        // builder.Entity<TBot>().ToTable("TelegramBots");
         builder.Entity<TBot>().HasKey(b => b.Id);
 
         // TelegramBotUser
-        builder.Entity<TBotUser>().HasKey(bu => bu.Id);
+        var tBotUserEntity = builder.Entity<TBotUser>();
 
-        builder.Entity<TBotUser>().HasOne<TUser>().WithMany()
-            .HasForeignKey(bu => bu.TelegramUserId);
+        tBotUserEntity.HasKey(bu => bu.Id);
 
-        builder.Entity<TBotUser>().HasOne<TBot>().WithMany()
-            .HasForeignKey(bu => bu.TelegramBotId);
+        var botUserForeignKeys = tBotUserEntity.Metadata.GetForeignKeys().ToList();
+
+        if (!botUserForeignKeys.Any(x => x.Properties.Any(p => p.IsForeignKey() && p.Name == "TelegramUserId")))
+            tBotUserEntity.HasOne<TUser>().WithMany().HasForeignKey(bu => bu.TelegramUserId);
+
+        if (!botUserForeignKeys.Any(x => x.Properties.Any(p => p.IsForeignKey() && p.Name == "TelegramBotId")))
+            tBotUserEntity.HasOne<TBot>().WithMany().HasForeignKey(bu => bu.TelegramBotId);
 
         // TelegramBotUserRole
-        builder.Entity<TBotUserRole>().HasKey(bur => new { bur.TelegramBotUserId, bur.TelegramRoleId });
+        var tBotUserRoleEntity = builder.Entity<TBotUserRole>();
 
-        builder.Entity<TBotUserRole>().HasOne<TBotUser>().WithMany()
-            .HasForeignKey(bur => bur.TelegramBotUserId);
+        tBotUserRoleEntity.HasKey(bur => new { bur.TelegramBotUserId, bur.TelegramRoleId });
 
-        builder.Entity<TBotUserRole>().HasOne<TRole>().WithMany()
-            .HasForeignKey(bur => bur.TelegramRoleId);
+        var botUserRoleForeignKeys = tBotUserRoleEntity.Metadata.GetForeignKeys().ToList();
+
+        if (!botUserRoleForeignKeys.Any(x => x.Properties.Any(p => p.IsForeignKey() && p.Name == "TelegramBotUserId")))
+            tBotUserRoleEntity.HasOne<TBotUser>().WithMany().HasForeignKey(bur => bur.TelegramBotUserId);
+
+        if (!botUserRoleForeignKeys.Any(x => x.Properties.Any(p => p.IsForeignKey() && p.Name == "TelegramRoleId")))
+            tBotUserRoleEntity.HasOne<TRole>().WithMany().HasForeignKey(bur => bur.TelegramRoleId);
     }
 }

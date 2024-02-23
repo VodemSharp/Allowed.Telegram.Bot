@@ -12,7 +12,7 @@
         <RepositoryType>git</RepositoryType>
         <Version>1.6.1</Version>
         <RepositoryUrl>https://github.com/VodemSharp/Allowed.Telegram.Bot</RepositoryUrl>
-        <PackageVersion>2.3.0</PackageVersion>
+        <PackageVersion>2.3.1</PackageVersion>
         <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     </PropertyGroup>
 
