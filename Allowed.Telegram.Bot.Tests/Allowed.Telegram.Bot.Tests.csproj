@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj"/>
+        <ProjectReference Include="..\Allowed.Telegram.Bot.Old\Allowed.Telegram.Bot.Old.csproj" />
     </ItemGroup>
 
 </Project>

@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E8F5ACC5
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot.Tests", "Allowed.Telegram.Bot.Tests\Allowed.Telegram.Bot.Tests.csproj", "{F9196165-230E-4A34-95B0-A80A2F7019B0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot", "Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj", "{970AFCA4-26C4-4698-9D70-B813B0A9F8D0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot.Old", "Allowed.Telegram.Bot.Old\Allowed.Telegram.Bot.Old.csproj", "{970AFCA4-26C4-4698-9D70-B813B0A9F8D0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allowed.Telegram.Bot.Data", "Allowed.Telegram.Bot.Data\Allowed.Telegram.Bot.Data.csproj", "{2BDB89BF-BA77-4979-9442-BEFFD371C24D}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.Telegram.Bot.Sample.NoDb", "Allowed.Telegram.Bot.Sample.NoDb\Allowed.Telegram.Bot.Sample.NoDb.csproj", "{F176CA24-41E4-46BC-B45D-F5404EAC805F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.Telegram.Bot.Sample", "Allowed.Telegram.Bot.Sample\Allowed.Telegram.Bot.Sample.csproj", "{5C4CB6F6-B390-4FAD-A2ED-38AE19C1A1F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Allowed.Telegram.Bot", "Allowed.Telegram.Bot\Allowed.Telegram.Bot.csproj", "{E6877B2A-F3F9-4D92-8B29-AE619548F365}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,18 @@ Global
 		{5C4CB6F6-B390-4FAD-A2ED-38AE19C1A1F0}.Release|x64.Build.0 = Release|Any CPU
 		{5C4CB6F6-B390-4FAD-A2ED-38AE19C1A1F0}.Release|x86.ActiveCfg = Release|Any CPU
 		{5C4CB6F6-B390-4FAD-A2ED-38AE19C1A1F0}.Release|x86.Build.0 = Release|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Debug|x64.Build.0 = Debug|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Debug|x86.Build.0 = Debug|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Release|x64.ActiveCfg = Release|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Release|x64.Build.0 = Release|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Release|x86.ActiveCfg = Release|Any CPU
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -114,6 +128,7 @@ Global
 		{20DD639A-4B12-47AB-BF6A-28E1DB5DB2F5} = {88A2F7E8-8650-4E98-A361-833BEBB62D8F}
 		{F176CA24-41E4-46BC-B45D-F5404EAC805F} = {7FB87FF2-C37F-49D9-915B-A34540469640}
 		{5C4CB6F6-B390-4FAD-A2ED-38AE19C1A1F0} = {7FB87FF2-C37F-49D9-915B-A34540469640}
+		{E6877B2A-F3F9-4D92-8B29-AE619548F365} = {88A2F7E8-8650-4E98-A361-833BEBB62D8F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9CD5FD8C-AA30-4BAE-B081-B9DBA7E0FCDA}

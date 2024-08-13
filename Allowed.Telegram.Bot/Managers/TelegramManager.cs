@@ -1,79 +1,73 @@
-﻿using Allowed.Telegram.Bot.Abstractions;
-using Allowed.Telegram.Bot.Extensions.Collections;
-using Allowed.Telegram.Bot.Extensions.Collections.Items;
-using Allowed.Telegram.Bot.Handlers;
+﻿using Allowed.Telegram.Bot.Handlers;
+using Allowed.Telegram.Bot.Managers.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
-using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 
 namespace Allowed.Telegram.Bot.Managers;
 
-public class TelegramManager : ITelegramManager
+public sealed class TelegramManager(
+    IServiceProvider services,
+    ILoggerFactory loggerFactory,
+    TelegramHandlerList handlerList
+) : ITelegramManager
 {
-    protected readonly ClientsCollection ClientsCollection;
-    protected readonly ControllersCollection ControllersCollection;
-    protected readonly ILogger<TelegramManager> Logger;
+    private readonly ILogger<TelegramManager> _logger = loggerFactory.CreateLogger<TelegramManager>();
 
-    public TelegramManager(IServiceProvider services,
-        ControllersCollection controllersCollection,
-        ClientsCollection clientsCollection,
-        ILoggerFactory loggerFactory)
+    private IServiceProvider Services { get; } = services;
+
+    public async Task Start(TelegramHandler telegramHandler)
     {
-        ControllersCollection = controllersCollection;
-        ClientsCollection = clientsCollection;
-        Logger = loggerFactory.CreateLogger<TelegramManager>();
-        Services = services;
-    }
-
-    protected IServiceProvider Services { get; }
-
-    public virtual async Task Start(ClientItem client)
-    {
-        if (ClientsCollection.Clients.Any(c => c.Options.Name == client.Options.Name))
+        if (handlerList.Handlers.Any(c => c.Options.Name == telegramHandler.Options.Name))
         {
-            Logger.LogWarning("Telegram bot has already been started!");
+            _logger.LogWarning("Telegram bot has already been started!");
             return;
         }
 
-        ClientsCollection.Clients.Add(client);
+        handlerList.Handlers.Add(telegramHandler);
 
-        async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token)
-        {
-            await using var scope = Services.CreateAsyncScope();
-            await new MessageHandler(ControllersCollection, tgClient, client.Options, scope.ServiceProvider)
-                .OnUpdate(tgClient, update, token);
-        }
+        await telegramHandler.Client.DeleteWebhookAsync(cancellationToken:
+            telegramHandler.CancellationTokenSource?.Token ?? default(CancellationToken));
 
-        await client.Client.DeleteWebhookAsync(cancellationToken: client.CancellationTokenSource.Token);
-        client.Client.StartReceiving(UpdateHandler,
-            (tgClient, exception, _) => Logger.LogError("{botId}:\n{exception}",
-                tgClient.BotId, exception.ToString()),
-            new ReceiverOptions(), client.CancellationTokenSource.Token);
+        // TODO ReceiverOptions
+        telegramHandler.Client.StartReceiving(UpdateHandler, PollingErrorHandler,
+            new ReceiverOptions(), telegramHandler.CancellationTokenSource?.Token ?? default(CancellationToken));
     }
 
-    public virtual async Task Stop(IEnumerable<string> names)
+    private async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token)
+    {
+        using var scope = Services.CreateScope();
+        await TelegramUpdateHandler.Handle(scope, tgClient, update, token);
+    }
+
+    private async void PollingErrorHandler(ITelegramBotClient tgClient, Exception exception, CancellationToken _)
+    {
+        await TelegramUpdateHandler.HandleError(_logger, tgClient, exception);
+    }
+
+    public async Task Stop(IEnumerable<string> names)
     {
         foreach (var name in names) await Stop(name);
     }
 
     public Task Stop(string name)
     {
-        var client = ClientsCollection.Clients.SingleOrDefault(c => c.Options.Name == name);
-        if (client == null)
+        var handler = handlerList.Handlers.SingleOrDefault(c => c.Options.Name == name);
+        if (handler == null)
         {
-            Logger.LogWarning("Telegram bot has already been stopped!");
+            _logger.LogWarning("Telegram bot has already been stopped!");
             return Task.CompletedTask;
         }
 
-        client.CancellationTokenSource.Cancel();
-        ClientsCollection.Clients.Remove(client);
+        handler.CancellationTokenSource?.Cancel();
+        handlerList.Handlers.Remove(handler);
         return Task.CompletedTask;
     }
 
-    public virtual async Task Start(IEnumerable<ClientItem> clients)
+    public async Task Start(IEnumerable<TelegramHandler> handlers)
     {
-        foreach (var client in clients) await Start(client);
+        foreach (var handler in handlers) await Start(handler);
     }
 }

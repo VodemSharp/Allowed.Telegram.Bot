@@ -1,18 +1,24 @@
-﻿using Allowed.Telegram.Bot.Clients.Options;
-using Allowed.Telegram.Bot.Utilities;
+﻿using Allowed.Telegram.Bot.Helpers;
+using Allowed.Telegram.Bot.Options;
 using Telegram.Bot;
 using Telegram.Bot.Requests.Abstractions;
 
 namespace Allowed.Telegram.Bot.Clients;
 
-public class SafeTelegramBotClient(
-    SafeTelegramBotClientOptions options,
-    HttpClient? httpClient = null
-) : TelegramBotClient(options, httpClient)
+public class SafeTelegramBotClient : TelegramBotClient
 {
-    private readonly List<string>? _exceptLimitedRequests = options.ExceptLimitedMethods;
-    private readonly List<string>? _limitedRequests = options.LimitedMethods;
-    private readonly SemaphoreTimeLocker _locker = new(options.Requests, options.Delay);
+    private readonly List<string> _exceptLimitedRequests;
+    private readonly List<string> _limitedRequests;
+    private readonly SemaphoreTimeLocker _locker;
+
+    public SafeTelegramBotClient(SafeTelegramBotClientOptions options,
+        HttpClient httpClient = null) : base(options,
+        httpClient)
+    {
+        _locker = new SemaphoreTimeLocker(options.Requests, options.Delay);
+        _limitedRequests = options.LimitedMethods;
+        _exceptLimitedRequests = options.ExceptLimitedMethods;
+    }
 
     public override async Task<TResponse> MakeRequestAsync<TResponse>(IRequest<TResponse> request,
         CancellationToken cancellationToken = new())
