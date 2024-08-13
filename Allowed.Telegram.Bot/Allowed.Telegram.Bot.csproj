@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Company>Allowed Inc.</Company>
         <Authors>VodemSharp</Authors>
         <Product>AllowedSharp</Product>
         <Description>Minimal API system for Telegram bots.</Description>
-        <PackageIcon>icon.png</PackageIcon>
+        <PackageIcon>Images/icon.png</PackageIcon>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/VodemSharp/Allowed.Telegram.Bot</RepositoryUrl>
         <PackageVersion>5.0.0-alpha</PackageVersion>

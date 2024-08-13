@@ -15,7 +15,7 @@ public class MessageCommandHandler(
         ITelegramBotClient client, Update update, List<MessageCommand> commands, CancellationToken token)
     {
         var message = update.Message!;
-        if (string.IsNullOrEmpty(message.Text)) return Task.FromResult<ExecutableCommand>(null);
+        if (string.IsNullOrEmpty(message.Text)) return Task.FromResult<ExecutableCommand?>(null);
 
         var messageText = message.Text.Trim();
 
