@@ -60,7 +60,7 @@ public abstract class CommandHandler<TCommand>(
 
     public async Task Invoke(ITelegramBotClient client, Update update, CancellationToken token)
     {
-        var globalActions = provider.GetRequiredService<CommandActionGlobalColletion>();
+        var globalActions = provider.GetRequiredService<CommandActionGlobalCollection>();
         var commands = await ApplyFilters(client, update, commandCollection.Items);
         var paramCommand = await GetCommand(client, update, commands, token);
 

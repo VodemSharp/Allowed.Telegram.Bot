@@ -12,7 +12,7 @@ public static class TelegramClientsExtensions
 {
     public static IServiceCollection AddTelegramServices(this IServiceCollection services)
     {
-        services.AddSingleton<CommandActionGlobalColletion>();
+        services.AddSingleton<CommandActionGlobalCollection>();
         services.AddSingleton<TelegramHandlerList>();
         services.AddSingleton(typeof(ICommandCollection<>), typeof(CommandCollection<>));
 
