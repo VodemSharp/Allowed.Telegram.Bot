@@ -1,4 +1,5 @@
 ﻿using Allowed.Telegram.Bot.Commands.Actions;
+using Allowed.Telegram.Bot.Commands.Attributes;
 using Allowed.Telegram.Bot.Commands.Core;
 using Allowed.Telegram.Bot.Commands.Execution.Messages;
 using Allowed.Telegram.Bot.Commands.Execution.Updates;
@@ -12,6 +13,7 @@ public static class TelegramClientsExtensions
 {
     public static IServiceCollection AddTelegramServices(this IServiceCollection services)
     {
+        services.AddSingleton<CommandAttributeHandlerCollection>();
         services.AddSingleton<CommandActionGlobalCollection>();
         services.AddSingleton<TelegramHandlerList>();
         services.AddSingleton(typeof(ICommandCollection<>), typeof(CommandCollection<>));

@@ -6,7 +6,7 @@ namespace Allowed.Telegram.Bot.Handlers;
 
 public static class TelegramHandlerFactory
 {
-    public static TelegramHandler CreateClient(SimpleTelegramBotClientOptions options,
+    public static TelegramHandler CreateHandler(SimpleTelegramBotClientOptions options,
         CancellationTokenSource? source = null)
     {
         source ??= new CancellationTokenSource();

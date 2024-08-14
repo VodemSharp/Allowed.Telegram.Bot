@@ -5,8 +5,8 @@ namespace Allowed.Telegram.Bot.Commands.Helpers;
 
 public class Sender(Chat chat, User? user)
 {
-    public Chat Chat { get; set; } = chat;
-    public User? User { get; set; } = user;
+    public Chat Chat { get; } = chat;
+    public User? User { get; } = user;
 }
 
 public static class SenderHelper

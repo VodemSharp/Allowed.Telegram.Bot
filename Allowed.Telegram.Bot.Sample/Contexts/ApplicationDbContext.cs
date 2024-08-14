@@ -5,12 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Allowed.Telegram.Bot.Sample.Contexts;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-    {
-    }
-
     public virtual DbSet<ApplicationTgUser> TelegramUsers { get; set; }
     public virtual DbSet<ApplicationTgRole> TelegramRoles { get; set; }
     public virtual DbSet<ApplicationTgBot> TelegramBots { get; set; }
@@ -29,8 +25,8 @@ public class ApplicationDbContext : DbContext
         // UserFile
         builder.Entity<UserFile>().HasKey(uf => uf.Id);
 
-        builder.Entity<UserFile>().HasOne(uf => uf.TelegramUser)
+        builder.Entity<UserFile>().HasOne(uf => uf.TelegramBotUser)
             .WithMany(uf => uf.UserFiles)
-            .HasForeignKey(uf => uf.TelegramUserId);
+            .HasForeignKey(uf => new { uf.TelegramBotId, uf.TelegramUserId });
     }
 }

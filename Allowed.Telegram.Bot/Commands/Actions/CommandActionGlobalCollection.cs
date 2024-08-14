@@ -2,6 +2,6 @@
 
 public class CommandActionGlobalCollection
 {
-    public List<CommandAction> ActionsBefore { get; set; } = [];
-    public List<CommandAction> ActionsAfter { get; set; } = [];
+    public List<CommandAction> ActionsBefore { get; } = [];
+    public List<CommandAction> ActionsAfter { get; } = [];
 }

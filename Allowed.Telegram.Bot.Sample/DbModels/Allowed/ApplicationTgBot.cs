@@ -1,7 +1,5 @@
-﻿using Allowed.Telegram.Bot.Data.Models;
+﻿using Allowed.Telegram.Bot.Data.Entities;
 
 namespace Allowed.Telegram.Bot.Sample.DbModels.Allowed;
 
-public class ApplicationTgBot : TelegramBot<int>
-{
-}
+public class ApplicationTgBot : TelegramBot;

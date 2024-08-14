@@ -20,7 +20,7 @@ public sealed class TelegramManager(
 
     public async Task Start(TelegramHandler telegramHandler)
     {
-        if (handlerList.Handlers.Any(c => c.Options.Name == telegramHandler.Options.Name))
+        if (handlerList.Handlers.Any(c => c.Options.Id == telegramHandler.Options.Id))
         {
             _logger.LogWarning("Telegram bot has already been started!");
             return;
@@ -38,7 +38,7 @@ public sealed class TelegramManager(
 
     private async void UpdateHandler(ITelegramBotClient tgClient, Update update, CancellationToken token)
     {
-        using var scope = Services.CreateScope();
+        await using var scope = Services.CreateAsyncScope();
         await TelegramUpdateHandler.Handle(scope, tgClient, update, token);
     }
 
@@ -47,14 +47,14 @@ public sealed class TelegramManager(
         await TelegramUpdateHandler.HandleError(_logger, tgClient, exception);
     }
 
-    public async Task Stop(IEnumerable<string> names)
+    public async Task Stop(IEnumerable<long> telegramIds)
     {
-        foreach (var name in names) await Stop(name);
+        foreach (var telegramId in telegramIds) await Stop(telegramId);
     }
 
-    public Task Stop(string name)
+    public Task Stop(long telegramId)
     {
-        var handler = handlerList.Handlers.SingleOrDefault(c => c.Options.Name == name);
+        var handler = handlerList.Handlers.SingleOrDefault(c => c.Options.Id == telegramId);
         if (handler == null)
         {
             _logger.LogWarning("Telegram bot has already been stopped!");

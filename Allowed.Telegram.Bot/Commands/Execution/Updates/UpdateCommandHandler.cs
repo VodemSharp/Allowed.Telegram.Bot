@@ -11,27 +11,21 @@ public class UpdateCommandHandler(
 {
     private readonly IServiceProvider _provider = provider;
 
-    protected override Task<ExecutableCommand?> GetCommand(
+    protected override Task<List<Command>> GetCommands(
         ITelegramBotClient client, Update update, List<UpdateCommand> commands, CancellationToken token)
     {
-        var message = update.Message!;
+        return Task.FromResult(commands.Cast<Command>().ToList());
+    }
 
-        if (string.IsNullOrEmpty(message.Text)) return Task.FromResult<ExecutableCommand?>(null);
-
-        var command = commands.SingleOrDefault();
-
-        if (command == null) return Task.FromResult<ExecutableCommand?>(null);
-
-        return Task.FromResult(new ExecutableCommand
-        {
-            Command = command,
-            Parameters = CommandParamsInjector.GetParameters(_provider, command,
-                new Dictionary<Type, object>
-                {
-                    { typeof(ITelegramBotClient), client },
-                    { typeof(Update), update },
-                    { typeof(CancellationToken), token }
-                })
-        })!;
+    protected override Task<List<object?>> GetParameters(ITelegramBotClient client, Update update,
+        UpdateCommand command, CancellationToken token)
+    {
+        return Task.FromResult(CommandParamsInjector.GetParameters(_provider, command,
+            new Dictionary<Type, object>
+            {
+                { typeof(ITelegramBotClient), client },
+                { typeof(Update), update },
+                { typeof(CancellationToken), token }
+            }));
     }
 }

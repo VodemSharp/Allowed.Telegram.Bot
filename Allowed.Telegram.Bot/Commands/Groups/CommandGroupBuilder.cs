@@ -1,4 +1,5 @@
 ﻿using Allowed.Telegram.Bot.Commands.Actions;
+using Allowed.Telegram.Bot.Commands.Attributes;
 using Allowed.Telegram.Bot.Commands.Core;
 using Allowed.Telegram.Bot.Commands.Filters;
 
@@ -23,6 +24,11 @@ public class CommandGroupBuilder : ICommandGroupBuilder
                 Handler = x.Handler,
                 Args = x.Args
             }).ToList(),
+            Attributes = builder.Group.Attributes.Select(x => new CommandAttribute
+            {
+                Handler = x.Handler,
+                Args = x.Args
+            }).ToList(),
             ActionsBefore = builder.Group.ActionsBefore.Select(x => new CommandAction
             {
                 Handler = x.Handler
@@ -40,6 +46,13 @@ public class CommandGroupBuilder : ICommandGroupBuilder
         return this;
     }
 
+    public ICommandGroupBuilder AddAttribute<TAttribute>(params object[] args)
+        where TAttribute : CommandAttributeHandler
+    {
+        Group.Attributes.Add(new CommandAttribute { Handler = typeof(TAttribute), Args = args });
+        return this;
+    }
+
     public ICommandGroupBuilder AddActionBefore<TAction>() where TAction : CommandActionHandler
     {
         Group.ActionsBefore.Add(new CommandAction { Handler = typeof(TAction) });
@@ -53,13 +66,16 @@ public class CommandGroupBuilder : ICommandGroupBuilder
     }
 
     public void ApplyEffects(ICommandBuilder builder)
-    {       
+    {
         foreach (var groupFilter in Group.Filters)
             builder.AddFilter(groupFilter);
+        
+        foreach (var groupAttribute in Group.Attributes)
+            builder.AddAttribute(groupAttribute);
 
         foreach (var action in Group.ActionsBefore)
             builder.AddActionBefore(action);
-        
+
         foreach (var action in Group.ActionsAfter)
             builder.AddActionBefore(action);
     }

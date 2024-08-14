@@ -2,5 +2,5 @@
 
 public class TelegramHandlerList
 {
-    public List<TelegramHandler> Handlers { get; set; } = [];
+    public List<TelegramHandler> Handlers { get; } = [];
 }

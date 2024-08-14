@@ -2,6 +2,6 @@
 
 public class CommandFilter
 {
-    public Type Handler { get; set; } = null!;
-    public object[] Args { get; set; } = null!;
+    public Type Handler { get; init; } = null!;
+    public object?[] Args { get; init; } = null!;
 }

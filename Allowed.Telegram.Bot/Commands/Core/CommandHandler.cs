@@ -1,4 +1,5 @@
 ﻿using Allowed.Telegram.Bot.Commands.Actions;
+using Allowed.Telegram.Bot.Commands.Attributes;
 using Allowed.Telegram.Bot.Commands.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
@@ -8,23 +9,25 @@ namespace Allowed.Telegram.Bot.Commands.Core;
 
 public abstract class CommandHandler<TCommand>(
     IServiceProvider provider,
-    ICommandCollection<TCommand> commandCollection)
-    : ICommandHandler
+    ICommandCollection<TCommand> commandCollection) : ICommandHandler
     where TCommand : Command
 {
-    protected abstract Task<ExecutableCommand?> GetCommand(
-        ITelegramBotClient client, Update update, List<TCommand> commands, CancellationToken token);
+    protected abstract Task<List<Command>> GetCommands(ITelegramBotClient client, Update update,
+        List<TCommand> commands, CancellationToken token);
+
+    protected abstract Task<List<object?>> GetParameters(ITelegramBotClient client, Update update, TCommand command,
+        CancellationToken token);
 
     private async Task<List<TCommand>> ApplyFilters(ITelegramBotClient client, Update update, List<TCommand> commands)
     {
+        var filteredCommands = new List<TCommand>();
         var filters = new List<CommandFilterHandler>();
 
-        // Apply filters
-        for (var i = 0; i < commands.Count; i++)
+        foreach (var command in commands)
         {
             var badCommand = false;
 
-            foreach (var filter in commands[i].Filters)
+            foreach (var filter in command.Filters)
             {
                 var createdFilter = filters.SingleOrDefault(x => x.GetType() == filter.Handler);
                 if (createdFilter == null)
@@ -40,13 +43,52 @@ public abstract class CommandHandler<TCommand>(
                 break;
             }
 
-            if (!badCommand) continue;
-
-            commands.RemoveAt(i);
-            i--;
+            if (!badCommand)
+                filteredCommands.Add(command);
         }
 
-        return commands;
+        return filteredCommands;
+    }
+
+    private async Task<List<Command>> CheckAttributes(ITelegramBotClient client, Update update, List<Command> commands)
+    {
+        var handlers = provider.GetRequiredService<CommandAttributeHandlerCollection>().Handlers;
+        var appliedCommands = commands.Select(x => x).ToList();
+
+        foreach (var handlerType in handlers)
+        {
+            var handlerAppliedCommands = new List<Command>();
+            CommandAttributeHandler? createdHandler = null;
+
+            for (var i = 0; i < appliedCommands.Count; i++)
+            {
+                var command = appliedCommands[i];
+                var attribute = command.Attributes.SingleOrDefault(a => a.Handler == handlerType);
+
+                if (attribute == null) continue;
+
+                if (createdHandler == null)
+                {
+                    createdHandler = (CommandAttributeHandler)provider.GetRequiredService(handlerType);
+                    await createdHandler.Initialize(client, update);
+                }
+
+                if (!await createdHandler.Apply(attribute.Args))
+                {
+                    appliedCommands.RemoveAt(i);
+                    i--;
+                }
+                else
+                {
+                    handlerAppliedCommands.Add(command);
+                }
+            }
+
+            if (handlerAppliedCommands.Count != 0)
+                appliedCommands = handlerAppliedCommands;
+        }
+
+        return appliedCommands.Count == 0 ? commands : appliedCommands;
     }
 
     private async Task InvokeActions(ITelegramBotClient client, Update update, List<CommandAction> actions)
@@ -61,16 +103,24 @@ public abstract class CommandHandler<TCommand>(
     public async Task Invoke(ITelegramBotClient client, Update update, CancellationToken token)
     {
         var globalActions = provider.GetRequiredService<CommandActionGlobalCollection>();
-        var commands = await ApplyFilters(client, update, commandCollection.Items);
-        var paramCommand = await GetCommand(client, update, commands, token);
+        var tCommands = await ApplyFilters(client, update, commandCollection.Items);
+        var commands = await GetCommands(client, update, tCommands, token);
+        commands = await CheckAttributes(client, update, commands);
 
-        if (paramCommand != null)
+        if (commands.Count != 0)
         {
-            var command = paramCommand.Command;
+            var command = commands.Single();
+            var parameters = await GetParameters(client, update, (TCommand)command, token);
 
             await InvokeActions(client, update, globalActions.ActionsBefore);
             await InvokeActions(client, update, command.ActionsBefore);
-            command.Handler.Method.Invoke(command.Handler.Target, paramCommand.Parameters.ToArray());
+
+            var returnType = command.Handler.Method.ReturnType;
+            var result = command.Handler.Method.Invoke(command.Handler.Target, parameters.ToArray());
+
+            if (typeof(Task).IsAssignableFrom(returnType))
+                await (Task)result!;
+
             await InvokeActions(client, update, command.ActionsAfter);
             await InvokeActions(client, update, globalActions.ActionsAfter);
         }

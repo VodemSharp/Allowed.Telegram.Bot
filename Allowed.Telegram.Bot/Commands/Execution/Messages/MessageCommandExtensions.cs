@@ -32,12 +32,12 @@ public static class MessageCommandExtensions
         return command;
     }
 
-    public static ICommandBuilder MapDefaultMessage(this IHost host, Delegate handler)
+    public static ICommandBuilder MapMessageCommand(this IHost host, Delegate handler)
     {
         return host.MapMessageCommand(string.Empty, handler);
     }
 
-    public static ICommandBuilder MapDefaultMessage(this ICommandGroupBuilder builder, Delegate handler)
+    public static ICommandBuilder MapMessageCommand(this ICommandGroupBuilder builder, Delegate handler)
     {
         var command = builder.Group.Host.MapMessageCommand(string.Empty, handler);
         foreach (var groupFilter in builder.Group.Filters)

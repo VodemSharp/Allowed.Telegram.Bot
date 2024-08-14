@@ -1,4 +1,5 @@
 ﻿using Allowed.Telegram.Bot.Commands.Actions;
+using Allowed.Telegram.Bot.Commands.Attributes;
 using Allowed.Telegram.Bot.Commands.Filters;
 
 namespace Allowed.Telegram.Bot.Commands.Core;
@@ -6,7 +7,7 @@ namespace Allowed.Telegram.Bot.Commands.Core;
 public class CommandBuilder<TCommand>(TCommand command) : ICommandBuilder
     where TCommand : Command
 {
-    public ICommandBuilder AddFilter<THandler>(params object[] args) where THandler : CommandFilterHandler
+    public ICommandBuilder AddFilter<THandler>(params object?[] args) where THandler : CommandFilterHandler
     {
         command.Filters.Add(new CommandFilter { Handler = typeof(THandler), Args = args });
         return this;
@@ -15,6 +16,18 @@ public class CommandBuilder<TCommand>(TCommand command) : ICommandBuilder
     public ICommandBuilder AddFilter(CommandFilter filter)
     {
         command.Filters.Add(filter);
+        return this;
+    }
+
+    public ICommandBuilder AddAttribute<THandler>(params object?[] args) where THandler : CommandAttributeHandler
+    {
+        command.Attributes.Add(new CommandAttribute { Handler = typeof(THandler), Args = args });
+        return this;
+    }
+
+    public ICommandBuilder AddAttribute(CommandAttribute attribute)
+    {
+        command.Attributes.Add(attribute);
         return this;
     }
 

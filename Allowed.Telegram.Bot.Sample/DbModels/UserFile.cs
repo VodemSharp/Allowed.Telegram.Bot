@@ -6,9 +6,10 @@ public class UserFile
 {
     public int Id { get; set; }
 
-    public int TelegramUserId { get; set; }
-    public ApplicationTgUser TelegramUser { get; set; }
+    public long TelegramBotId { get; set; }
+    public long TelegramUserId { get; set; }
+    public ApplicationTgBotUser TelegramBotUser { get; set; }
 
-    public string Type { get; set; }
-    public string Value { get; set; }
+    public string Type { get; set; } = null!;
+    public string Value { get; set; } = null!;
 }

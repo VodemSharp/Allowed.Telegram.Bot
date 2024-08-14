@@ -8,7 +8,6 @@ using Allowed.Telegram.Bot.Handlers;
 using Allowed.Telegram.Bot.Managers;
 using Allowed.Telegram.Bot.Sample.NoDb.Actions;
 using Allowed.Telegram.Bot.Sample.NoDb.Filters;
-using Allowed.Telegram.Bot.Sample.NoDb.Models;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -23,15 +22,15 @@ builder.Services.AddTelegramServices();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddTelegramManager();
 
-builder.Services.AddTransient<TestFilterHandler>();
-builder.Services.AddTransient<TestActionHandler>();
-builder.Services.AddTransient<CheckActionHandler>();
+builder.Services.AddTransient<TestFilter>();
+builder.Services.AddTransient<TestAction>();
+builder.Services.AddTransient<CheckAction>();
 
 var app = builder.Build();
 
-app.AddGlobalActionBefore<CheckActionHandler>();
+app.AddGlobalActionBefore<CheckAction>();
 
-app.MapDefaultMessage(async (ITelegramBotClient client, Message message) =>
+app.MapMessageCommand(async (ITelegramBotClient client, Message message) =>
 {
     await client.SendTextMessageAsync(message.From!.Id, "Default message!");
 });
@@ -56,8 +55,8 @@ app.MapMessageCommand("/start",
     }, MessageCommandTypes.Parameterized);
 
 var group = app.MapCommandGroup()
-    .AddFilter<TestFilterHandler>(true)
-    .AddActionAfter<TestActionHandler>();
+    .AddFilter<TestFilter>(true)
+    .AddActionAfter<TestAction>();
 
 group.MapMessageCommand("/filter",
     async (ITelegramBotClient client, Message message) =>
@@ -89,26 +88,14 @@ group.MapMessageCommand("Test text command 3",
 app.MapUpdateCommand(async (ITelegramBotClient client, Update update) =>
 {
     if (update.Type == UpdateType.EditedMessage)
-    {
         await client.SendTextMessageAsync(update.EditedMessage!.Chat,
             "I don't know how to handle this command in a standard way yet!");
-    }
 });
-
-// Bot settings (requires authorization or ip filter protection)
-app.MapGet("status", (TelegramHandlerList telegramHandlers) =>
-    Task.FromResult(telegramHandlers.Handlers.Select(c => c.Options.Name).Select(x => new TelegramBotDto(x, true))));
-
-app.MapPost("start/{name}/{token}", async (ITelegramManager telegramManager, string name, string token) =>
-    await telegramManager.Start(TelegramHandlerFactory.CreateClient(new SafeTelegramBotClientOptions(name, token))));
-
-app.MapPost("stop/{name}", async (ITelegramManager telegramManager, string name) =>
-    await telegramManager.Stop(name));
 
 var telegramManager = app.Services.GetRequiredService<ITelegramManager>();
 await telegramManager.Start(new[]
 {
-    TelegramHandlerFactory.CreateClient(new SimpleTelegramBotClientOptions("<NAME>", "<TOKEN>"))
+    TelegramHandlerFactory.CreateHandler(new SimpleTelegramBotClientOptions("<TOKEN>"))
 });
 
 // Configure the HTTP request pipeline.

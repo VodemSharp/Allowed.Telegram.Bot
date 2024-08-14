@@ -10,5 +10,5 @@ public abstract class CommandFilterHandler
         return Task.CompletedTask;
     }
 
-    public abstract Task<bool> Apply(params object[] args);
+    public abstract Task<bool> Apply(params object?[] args);
 }

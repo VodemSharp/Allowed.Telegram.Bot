@@ -11,7 +11,7 @@
         <PackageIcon>Images/icon.png</PackageIcon>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/VodemSharp/Allowed.Telegram.Bot</RepositoryUrl>
-        <PackageVersion>5.0.0-alpha</PackageVersion>
+        <PackageVersion>5.0.0-alpha.2</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

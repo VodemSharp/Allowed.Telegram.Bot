@@ -3,5 +3,5 @@
 public interface ICommandCollection<T>
     where T : Command
 {
-    public List<T> Items { get; set; }
+    public List<T> Items { get; }
 }

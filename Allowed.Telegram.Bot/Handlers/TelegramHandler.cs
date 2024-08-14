@@ -5,7 +5,7 @@ namespace Allowed.Telegram.Bot.Handlers;
 
 public class TelegramHandler
 {
-    public ITelegramBotClient Client { get; set; } = null!;
-    public SimpleTelegramBotClientOptions Options { get; set; } = null!;
-    public CancellationTokenSource? CancellationTokenSource { get; set; }
+    public ITelegramBotClient Client { get; init; } = null!;
+    public SimpleTelegramBotClientOptions Options { get; init; } = null!;
+    public CancellationTokenSource? CancellationTokenSource { get; init; }
 }

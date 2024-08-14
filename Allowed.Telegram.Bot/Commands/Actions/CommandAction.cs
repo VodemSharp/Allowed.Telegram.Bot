@@ -2,5 +2,5 @@
 
 public class CommandAction
 {
-    public Type Handler { get; set; } = null!;
+    public Type Handler { get; init; } = null!;
 }

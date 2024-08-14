@@ -2,6 +2,4 @@
 
 namespace Allowed.Telegram.Bot.Commands.Execution.Updates;
 
-public class UpdateCommand : Command
-{
-}
+public class UpdateCommand : Command;
