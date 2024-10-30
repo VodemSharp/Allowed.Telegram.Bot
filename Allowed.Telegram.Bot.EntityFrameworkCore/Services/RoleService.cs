@@ -36,7 +36,6 @@ public class RoleService<TContext, TKey, TRole, TBotUserRole>(TContext db) : IRo
 
     #region BotUserRoles
 
-    // TODO: Refactor
     public async Task<bool> Any(long botId, long userId, string roleName)
     {
         return await _userRoles.Join(_roles, x => x.TelegramRoleId, x => x.Id, (userRole, role) => new

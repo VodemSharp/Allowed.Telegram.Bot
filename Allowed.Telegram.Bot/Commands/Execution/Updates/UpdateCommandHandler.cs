@@ -21,11 +21,11 @@ public class UpdateCommandHandler(
         UpdateCommand command, CancellationToken token)
     {
         return Task.FromResult(CommandParamsInjector.GetParameters(_provider, command,
-            new Dictionary<Type, object>
+            new Dictionary<Type, Func<Type, object>>
             {
-                { typeof(ITelegramBotClient), client },
-                { typeof(Update), update },
-                { typeof(CancellationToken), token }
+                { typeof(ITelegramBotClient), _ => client },
+                { typeof(Update), _ => update },
+                { typeof(CancellationToken), _ => token }
             }));
     }
 }

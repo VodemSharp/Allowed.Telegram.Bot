@@ -1,42 +1,36 @@
 using Allowed.Telegram.Bot;
-using Allowed.Telegram.Bot.Clients.Options;
+using Allowed.Telegram.Bot.Clients;
 using Allowed.Telegram.Bot.Commands.Actions;
 using Allowed.Telegram.Bot.Commands.Attributes;
 using Allowed.Telegram.Bot.Commands.Execution.Messages;
+using Allowed.Telegram.Bot.Contexts;
 using Allowed.Telegram.Bot.EntityFrameworkCore;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Actions;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Attributes;
 using Allowed.Telegram.Bot.EntityFrameworkCore.Services.Abstractions;
 using Allowed.Telegram.Bot.Handlers;
-using Allowed.Telegram.Bot.Managers;
 using Allowed.Telegram.Bot.Sample.Contexts;
 using Allowed.Telegram.Bot.Sample.DbModels.Allowed;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connection).UseSnakeCaseNamingConvention());
 
 builder.Services.AddTelegramServices();
+builder.Services.AddTelegramHandler();
 
 builder.Services.AddTelegramEfServices<ApplicationDbContext, int, ApplicationTgBot, ApplicationTgUser,
     ApplicationTgBotUser, ApplicationTgRole, ApplicationTgBotUserRole>();
 builder.Services.AddTelegramEfActions();
 builder.Services.AddTelegramEfFilters();
 builder.Services.AddTelegramEfAttributes();
-
-if (builder.Environment.IsDevelopment())
-    builder.Services.AddTelegramManager();
-// TODO
-// else
-//     builder.Services.AddTelegramDbWebHookManager();
 
 var app = builder.Build();
 
@@ -61,7 +55,7 @@ app.MapMessageCommand("/start",
             result = $"{result}\nArgs: {args.Value}";
 
         await client.SendTextMessageAsync(message.From!.Id, result);
-    }, MessageCommandTypes.Parameterized);
+    }, MessageCommandCheckTypes.Parameterized);
 
 app.MapMessageCommand("/add_admin_role",
     async (ITelegramBotClient client, Message message, IRoleService roleService) =>
@@ -131,26 +125,48 @@ app.MapMessageCommand("Test state command",
     }).AddStateAttribute("TextTestState");
 
 app.MapMessageCommand("Test parameterized command",
-    async (ITelegramBotClient client, Message message) =>
-    {
-        await client.SendTextMessageAsync(message.From!.Id,
-            "You call text test state parameterized method with selected text!");
-    }, MessageCommandTypes.Parameterized)
+        async (ITelegramBotClient client, Message message) =>
+        {
+            await client.SendTextMessageAsync(message.From!.Id,
+                "You call text test state parameterized method with selected text!");
+        }, MessageCommandCheckTypes.Parameterized)
     .AddStateAttribute("TextTestState");
 
-var telegramManager = app.Services.GetRequiredService<ITelegramManager>();
-await telegramManager.Start(new[]
+var telegramHandler = app.Services.GetRequiredService<TelegramHandler>();
+var bots = new Dictionary<string, string>
 {
-    TelegramHandlerFactory.CreateHandler(new SimpleTelegramBotClientOptions("<TOKEN>"))
-});
+    { "<TOKEN>", "<PUBLIC_URL>" }
+};
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+foreach (var bot in bots)
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var allowedBot = TelegramContextFactory.CreateHandler(new SafeTelegramBotClientOptions(bot.Key));
+    await allowedBot.Client.DeleteWebhookAsync();
+
+    if (app.Environment.IsDevelopment())
+    {
+        allowedBot.Client.StartReceiving(telegramHandler.HandlePollingUpdate, telegramHandler.PollingErrorHandler);
+    }
+    else
+    {
+        telegramHandler.Register(allowedBot);
+        await allowedBot.Client.SetWebhookAsync($"{bot.Value}/{bot.Key.Split(':')[0]}");
+
+        app.MapPost("/{botId:long}", async ([FromRoute] long botId, HttpContext context, ILogger<Program> logger) =>
+        {
+            try
+            {
+                using var streamReader = new StreamReader(context.Request.Body);
+                var stream = await streamReader.ReadToEndAsync();
+                var update = JsonConvert.DeserializeObject<Update>(stream);
+                await telegramHandler.HandleWebHookUpdate(botId, update!);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{ex}", ex.ToString());
+            }
+        });
+    }
 }
-
-app.UseHttpsRedirection();
 
 app.Run();

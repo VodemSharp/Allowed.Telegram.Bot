@@ -1,4 +1,5 @@
 ﻿using Allowed.Telegram.Bot.Commands.Core;
+using Allowed.Telegram.Bot.Exceptions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -15,43 +16,49 @@ public class MessageCommandHandler(
         ITelegramBotClient client, Update update, List<MessageCommand> commands, CancellationToken token)
     {
         var message = update.Message!;
-        if (string.IsNullOrEmpty(message.Text)) return Task.FromResult(new List<Command>());
+        var filteredCommands = commands.Where(x => x.Type == message.Type).ToList();
 
-        var messageText = message.Text.Trim();
-
-        // var args = new MessageCommandArgs();
-        var result = commands.Where(x => x.Type == MessageCommandTypes.Strict && x.Text == messageText).ToList();
-
-        if (result.Count == 0)
+        List<MessageCommand> result = [];
+        if (!string.IsNullOrEmpty(message.Text))
         {
-            var minCommand = commands
-                .Where(x => x.Type == MessageCommandTypes.Parameterized && messageText.StartsWith(x.Text))
-                .MinBy(x => x.Text.Length);
+            result = filteredCommands
+                .Where(x => x.CheckType == MessageCommandCheckTypes.Strict && x.Text == message.Text).ToList();
 
-            if (minCommand != null)
-                result.Add(minCommand);
+            if (result.Count == 0)
+            {
+                var minCommand = filteredCommands
+                    .Where(x => x.CheckType == MessageCommandCheckTypes.Parameterized &&
+                                message.Text.StartsWith(x.Text))
+                    .MinBy(x => x.Text.Length);
+
+                if (minCommand != null)
+                    result.Add(minCommand);
+            }
         }
 
-        if (result.Count == 0) result = commands.Where(x => x.Text == string.Empty).ToList();
+        if (result.Count == 0) result = filteredCommands.Where(x => x.Text == string.Empty).ToList();
+        if (result.Count > 1)
+            throw new AmbiguousMessageException(message.Text, message.Type);
+
         return Task.FromResult(result.Count == 0 ? [] : result.Cast<Command>().ToList());
     }
 
     protected override Task<List<object?>> GetParameters(ITelegramBotClient client, Update update,
         MessageCommand command, CancellationToken token)
     {
-        var message = update.Message!.Text!;
+        var message = update.Message!;
         return Task.FromResult(CommandParamsInjector.GetParameters(_provider, command,
-            new Dictionary<Type, object>
+            new Dictionary<Type, Func<Type, object>>
             {
-                { typeof(ITelegramBotClient), client },
-                { typeof(Update), update },
-                { typeof(CancellationToken), token },
-                { typeof(Message), update.Message! },
+                { typeof(ITelegramBotClient), _ => client },
+                { typeof(Update), _ => update },
+                { typeof(CancellationToken), _ => token },
+                { typeof(Message), _ => message },
                 {
-                    typeof(MessageCommandArgs), new MessageCommandArgs
+                    typeof(MessageCommandArgs), _ => new MessageCommandArgs
                     {
-                        Value = command.Type == MessageCommandTypes.Parameterized
-                            ? message.Replace(command.Text, string.Empty)
+                        Value = command.CheckType == MessageCommandCheckTypes.Parameterized
+                            ? message.Text!.Replace(command.Text, string.Empty)
                             : null
                     }
                 }

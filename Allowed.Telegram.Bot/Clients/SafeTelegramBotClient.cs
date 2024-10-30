@@ -1,5 +1,4 @@
-﻿using Allowed.Telegram.Bot.Clients.Options;
-using Allowed.Telegram.Bot.Utilities;
+﻿using Allowed.Telegram.Bot.Utilities;
 using Telegram.Bot;
 using Telegram.Bot.Requests.Abstractions;
 

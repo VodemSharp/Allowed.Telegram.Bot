@@ -12,6 +12,32 @@ public abstract class CommandHandler<TCommand>(
     ICommandCollection<TCommand> commandCollection) : ICommandHandler
     where TCommand : Command
 {
+    public async Task Invoke(ITelegramBotClient client, Update update, CancellationToken token)
+    {
+        var globalActions = provider.GetRequiredService<CommandActionGlobalCollection>();
+        var tCommands = await ApplyFilters(client, update, commandCollection.Items);
+        var commands = await GetCommands(client, update, tCommands, token);
+        commands = await CheckAttributes(client, update, commands);
+
+        if (commands.Count != 0)
+        {
+            var command = commands.Single();
+            var parameters = await GetParameters(client, update, (TCommand)command, token);
+
+            await InvokeActions(client, update, globalActions.ActionsBefore);
+            await InvokeActions(client, update, command.ActionsBefore);
+
+            var returnType = command.Handler.Method.ReturnType;
+            var result = command.Handler.Method.Invoke(command.Handler.Target, parameters.ToArray());
+
+            if (typeof(Task).IsAssignableFrom(returnType))
+                await (Task)result!;
+
+            await InvokeActions(client, update, command.ActionsAfter);
+            await InvokeActions(client, update, globalActions.ActionsAfter);
+        }
+    }
+
     protected abstract Task<List<Command>> GetCommands(ITelegramBotClient client, Update update,
         List<TCommand> commands, CancellationToken token);
 
@@ -97,32 +123,6 @@ public abstract class CommandHandler<TCommand>(
         {
             var handler = (CommandActionHandler)provider.GetRequiredService(action.Handler);
             await handler.Execute(client, update);
-        }
-    }
-
-    public async Task Invoke(ITelegramBotClient client, Update update, CancellationToken token)
-    {
-        var globalActions = provider.GetRequiredService<CommandActionGlobalCollection>();
-        var tCommands = await ApplyFilters(client, update, commandCollection.Items);
-        var commands = await GetCommands(client, update, tCommands, token);
-        commands = await CheckAttributes(client, update, commands);
-
-        if (commands.Count != 0)
-        {
-            var command = commands.Single();
-            var parameters = await GetParameters(client, update, (TCommand)command, token);
-
-            await InvokeActions(client, update, globalActions.ActionsBefore);
-            await InvokeActions(client, update, command.ActionsBefore);
-
-            var returnType = command.Handler.Method.ReturnType;
-            var result = command.Handler.Method.Invoke(command.Handler.Target, parameters.ToArray());
-
-            if (typeof(Task).IsAssignableFrom(returnType))
-                await (Task)result!;
-
-            await InvokeActions(client, update, command.ActionsAfter);
-            await InvokeActions(client, update, globalActions.ActionsAfter);
         }
     }
 }
