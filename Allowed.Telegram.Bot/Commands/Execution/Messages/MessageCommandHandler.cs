@@ -1,5 +1,4 @@
 ﻿using Allowed.Telegram.Bot.Commands.Core;
-using Allowed.Telegram.Bot.Exceptions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -36,9 +35,8 @@ public class MessageCommandHandler(
             }
         }
 
-        if (result.Count == 0) result = filteredCommands.Where(x => x.Text == string.Empty).ToList();
-        if (result.Count > 1)
-            throw new AmbiguousMessageException(message.Text, message.Type);
+        if (result.Count == 0)
+            result = filteredCommands.Where(x => x.Text == string.Empty).ToList();
 
         return Task.FromResult(result.Count == 0 ? [] : result.Cast<Command>().ToList());
     }

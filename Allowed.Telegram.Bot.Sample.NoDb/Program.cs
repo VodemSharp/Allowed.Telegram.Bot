@@ -13,6 +13,7 @@ using Allowed.Telegram.Bot.Commands.Execution.Updates;
 using Allowed.Telegram.Bot.Commands.Groups;
 using Allowed.Telegram.Bot.Contexts;
 using Allowed.Telegram.Bot.Handlers;
+using Allowed.Telegram.Bot.Sample.NoDb;
 using Allowed.Telegram.Bot.Sample.NoDb.Actions;
 using Allowed.Telegram.Bot.Sample.NoDb.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -225,38 +226,42 @@ var bots = new Dictionary<string, string>
 
 foreach (var bot in bots)
 {
-    var allowedBot = TelegramContextFactory.CreateHandler(new SafeTelegramBotClientOptions(bot.Key));
-    await allowedBot.Client.DeleteWebhookAsync();
+    var botHandler = TelegramContextFactory.CreateHandler(new SafeTelegramBotClientOptions(bot.Key));
+    await botHandler.Client.DeleteWebhookAsync();
 
     if (app.Environment.IsDevelopment())
     {
-        allowedBot.Client.StartReceiving(telegramHandler.HandlePollingUpdate, telegramHandler.PollingErrorHandler);
+        botHandler.Client.StartReceiving(telegramHandler.HandlePollingUpdate, telegramHandler.PollingErrorHandler);
     }
     else
     {
-        telegramHandler.Register(allowedBot);
-        await allowedBot.Client.SetWebhookAsync($"{bot.Value}/{bot.Key.Split(':')[0]}");
-        
-        app.MapPost("/{botId:long}", async ([FromRoute] long botId, HttpContext context, ILogger<Program> logger) =>
-        {
-            try
-            {
-                using var streamReader = new StreamReader(context.Request.Body);
-                var stream = await streamReader.ReadToEndAsync();
-                var update = JsonConvert.DeserializeObject<Update>(stream);
-                await telegramHandler.HandleWebHookUpdate(botId, update!);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError("{ex}", ex.ToString());
-            }
-        });
+        telegramHandler.Register(botHandler);
+        await botHandler.Client.SetWebhookAsync($"{bot.Value}/{bot.Key.Split(':')[0]}");
     }
 }
 
+if (!app.Environment.IsDevelopment())
+    app.MapPost("/{botId:long}", async ([FromRoute] long botId, HttpContext context, ILogger<Program> logger) =>
+    {
+        try
+        {
+            using var streamReader = new StreamReader(context.Request.Body);
+            var stream = await streamReader.ReadToEndAsync();
+            var update = JsonConvert.DeserializeObject<Update>(stream);
+            await telegramHandler.HandleWebHookUpdate(botId, update!);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("{ex}", ex.ToString());
+        }
+    });
+
 app.Run();
 
-internal class TestCallbackQueryModel : CallbackQueryModel
+namespace Allowed.Telegram.Bot.Sample.NoDb
 {
-    [JsonPropertyName("a")] public bool SomeData { get; set; }
+    internal class TestCallbackQueryModel : CallbackQueryModel
+    {
+        [JsonPropertyName("a")] public bool SomeData { get; set; }
+    }
 }

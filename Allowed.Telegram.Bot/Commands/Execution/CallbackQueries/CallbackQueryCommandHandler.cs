@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Allowed.Telegram.Bot.Commands.Core;
-using Allowed.Telegram.Bot.Exceptions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -24,9 +23,8 @@ public class CallbackQueryCommandHandler(
 
         var result = commands.Where(x => x.Path == queryData.Path).ToList();
 
-        if (result.Count == 0) result = commands.Where(x => x.Path == string.Empty).ToList();
-        if (result.Count > 1)
-            throw new AmbiguousCallbackQueryException(queryData.Path);
+        if (result.Count == 0)
+            result = commands.Where(x => x.Path == string.Empty).ToList();
 
         return Task.FromResult(result.Count == 0 ? [] : result.Cast<Command>().ToList());
     }

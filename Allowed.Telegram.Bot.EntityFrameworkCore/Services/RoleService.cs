@@ -38,12 +38,15 @@ public class RoleService<TContext, TKey, TRole, TBotUserRole>(TContext db) : IRo
 
     public async Task<bool> Any(long botId, long userId, string roleName)
     {
-        return await _userRoles.Join(_roles, x => x.TelegramRoleId, x => x.Id, (userRole, role) => new
-        {
-            userRole.TelegramBotId,
-            userRole.TelegramUserId,
-            RoleName = role.Name
-        }).AnyAsync(x => x.TelegramBotId == botId && x.TelegramUserId == userId && x.RoleName == roleName);
+        return await _userRoles
+            .Join(_roles, userRole => userRole.TelegramRoleId, role => role.Id,
+                (userRole, role) => new
+                {
+                    userRole.TelegramBotId,
+                    userRole.TelegramUserId,
+                    RoleName = role.Name
+                })
+            .AnyAsync(x => x.TelegramBotId == botId && x.TelegramUserId == userId && x.RoleName == roleName);
     }
 
     public async Task Add(long botId, long userId, string roleName)
@@ -62,28 +65,28 @@ public class RoleService<TContext, TKey, TRole, TBotUserRole>(TContext db) : IRo
 
     public async Task Remove(long botId, long userId, string roleName)
     {
-        var userRole = await _userRoles.Join(_roles, x => x.TelegramRoleId, x => x.Id, (userRole, role) => new
-            {
-                UserRole = userRole,
-                RoleName = role.Name
-            })
+        var userRole = await _userRoles
+            .Join(_roles, userRole => userRole.TelegramRoleId, role => role.Id,
+                (userRole, role) => new { UserRole = userRole, RoleName = role.Name })
             .Where(x => x.UserRole.TelegramBotId == botId
                         && x.UserRole.TelegramUserId == userId
                         && x.RoleName == roleName)
-            .Select(x => x.UserRole).SingleAsync();
+            .Select(x => x.UserRole)
+            .SingleOrDefaultAsync();
 
-        _userRoles.Remove(userRole);
-        await db.SaveChangesAsync();
+        if (userRole != null)
+        {
+            _userRoles.Remove(userRole);
+            await db.SaveChangesAsync();
+        }
     }
 
     public async Task<List<string>> Get(long botId, long userId)
     {
-        return await _userRoles.Join(_roles, x => x.TelegramRoleId, x => x.Id, (userRole, role) => new
-        {
-            userRole.TelegramBotId,
-            userRole.TelegramUserId,
-            RoleName = role.Name
-        }).Where(x => x.TelegramBotId == botId && x.TelegramUserId == userId).Select(x => x.RoleName).ToListAsync();
+        return await _userRoles
+            .Where(userRole => userRole.TelegramBotId == botId && userRole.TelegramUserId == userId)
+            .Join(_roles, userRole => userRole.TelegramRoleId, role => role.Id, (userRole, role) => role.Name)
+            .ToListAsync();
     }
 
     #endregion

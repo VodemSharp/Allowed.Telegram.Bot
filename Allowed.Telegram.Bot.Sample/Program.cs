@@ -133,6 +133,7 @@ app.MapMessageCommand("Test parameterized command",
     .AddStateAttribute("TextTestState");
 
 var telegramHandler = app.Services.GetRequiredService<TelegramHandler>();
+
 var bots = new Dictionary<string, string>
 {
     { "<TOKEN>", "<PUBLIC_URL>" }
@@ -140,33 +141,34 @@ var bots = new Dictionary<string, string>
 
 foreach (var bot in bots)
 {
-    var allowedBot = TelegramContextFactory.CreateHandler(new SafeTelegramBotClientOptions(bot.Key));
-    await allowedBot.Client.DeleteWebhookAsync();
+    var botHandler = TelegramContextFactory.CreateHandler(new SafeTelegramBotClientOptions(bot.Key));
+    await botHandler.Client.DeleteWebhookAsync();
 
     if (app.Environment.IsDevelopment())
     {
-        allowedBot.Client.StartReceiving(telegramHandler.HandlePollingUpdate, telegramHandler.PollingErrorHandler);
+        botHandler.Client.StartReceiving(telegramHandler.HandlePollingUpdate, telegramHandler.PollingErrorHandler);
     }
     else
     {
-        telegramHandler.Register(allowedBot);
-        await allowedBot.Client.SetWebhookAsync($"{bot.Value}/{bot.Key.Split(':')[0]}");
-
-        app.MapPost("/{botId:long}", async ([FromRoute] long botId, HttpContext context, ILogger<Program> logger) =>
-        {
-            try
-            {
-                using var streamReader = new StreamReader(context.Request.Body);
-                var stream = await streamReader.ReadToEndAsync();
-                var update = JsonConvert.DeserializeObject<Update>(stream);
-                await telegramHandler.HandleWebHookUpdate(botId, update!);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError("{ex}", ex.ToString());
-            }
-        });
+        telegramHandler.Register(botHandler);
+        await botHandler.Client.SetWebhookAsync($"{bot.Value}/{bot.Key.Split(':')[0]}");
     }
 }
+
+if (!app.Environment.IsDevelopment())
+    app.MapPost("/{botId:long}", async ([FromRoute] long botId, HttpContext context, ILogger<Program> logger) =>
+    {
+        try
+        {
+            using var streamReader = new StreamReader(context.Request.Body);
+            var stream = await streamReader.ReadToEndAsync();
+            var update = JsonConvert.DeserializeObject<Update>(stream);
+            await telegramHandler.HandleWebHookUpdate(botId, update!);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("{ex}", ex.ToString());
+        }
+    });
 
 app.Run();
